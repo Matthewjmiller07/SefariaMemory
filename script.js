@@ -4,16 +4,16 @@ async function fetchText() {
     let textInput = document.getElementById('text-input').value;
     // Determine if input is chapter-level or verse-level
     const isChapterLevel = !textInput.includes(":");
-    // Replace whitespace with underscores and colons with periods
-    textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
-    // If chapter-level, append '.1' to the textInput to fetch the first verse
-    textInput = isChapterLevel ? `${textInput}.1` : textInput;
+    // Replace whitespace with underscores
+    textInput = textInput.replace(/\s+/g, '_');
     const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}`);
     const data = await response.json();
     console.log(data);
 
     // Check if the 'he' field is an array (chapter/range) or a string (specific verse)
     if (Array.isArray(data.he)) {
+        // If chapter-level, join all verses in the chapter into a single string
+        // If verse-level, join only the specified verses into a single string
         return data.he.join(' ');  // Join array of strings into a single string
     } else {
         return data.he;  // Return the string as is
