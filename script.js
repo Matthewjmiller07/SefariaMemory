@@ -4,7 +4,8 @@ async function fetchText() {
     const textInput = document.getElementById('text-input').value.replace(/\s+/g, '.');
     const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}?context=0`);
     const data = await response.json();
-    return data.he.join(' ');  // Join array of strings into a single string
+    console.log(data);  // Continue logging the data to the console for debugging
+    return data.he;  // Removed the .join(' ') method call
 }
 
 function stripHebrew(text) {
