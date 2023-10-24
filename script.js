@@ -3,15 +3,8 @@ let correctWords = [];
 async function fetchText() {
     let textInput = document.getElementById('text-input').value;
     const isRange = textInput.includes("-");  // Check if the input is a verse range
-    const isChapter = !textInput.includes(":");  // Check if the input is a chapter
     textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
-    let url = `https://www.sefaria.org/api/texts/${textInput}`;
-    if (isChapter) {
-        url += "?pad=0";  // Append query parameter to get the entire chapter
-    } else {
-        url += "?context=0";  // Append query parameter to get only the specific verse(s)
-    }
-    const response = await fetch(url);
+    const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}`);
     const data = await response.json();
     console.log(data);  // Continue logging the data to the console for debugging
 
