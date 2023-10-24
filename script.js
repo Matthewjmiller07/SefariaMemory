@@ -1,11 +1,12 @@
 let correctWords = [];
 
 async function fetchText() {
-    const textInput = document.getElementById('text-input').value.replace(/\s+/g, '.');
+    let textInput = document.getElementById('text-input').value;
+    textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
     const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}?context=0`);
     const data = await response.json();
     console.log(data);  // Continue logging the data to the console for debugging
-    return data.he;  // Removed the .join(' ') method call
+    return data.he;  
 }
 
 function stripHebrew(text) {
