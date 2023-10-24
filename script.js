@@ -13,12 +13,9 @@ async function fetchText() {
 
     if (Array.isArray(data.he)) {
         if (isVerseLevel) {
-            const verseData = data.he[data.he.length - 1];  // Get the last item in the array
-            if (Array.isArray(verseData)) {
-                return verseData.join(' ');  // Join array of strings into a single string for verse-level query
-            } else {
-                return verseData;  // Return the string as is for verse-level query
-            }
+            // Adjusted to handle verse ranges
+            const verseData = data.he.flat();  // Flatten the array
+            return verseData.join(' ');  // Join array of strings into a single string for verse-level query
         } else {
             return data.he.flat().join(' ');  // Flatten the array and join into a single string for chapter-level query
         }
