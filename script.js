@@ -4,14 +4,21 @@ async function fetchText() {
     let textInput = document.getElementById('text-input').value;
     const isVerseLevel = textInput.includes(":");
     textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
-    const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}`);
+    const url = isVerseLevel ? 
+        `https://www.sefaria.org/api/texts/${textInput}?context=0` : 
+        `https://www.sefaria.org/api/texts/${textInput}`;
+    const response = await fetch(url);
     const data = await response.json();
     console.log(data);  // Continue logging the data to the console for debugging
 
-    // Check if the 'he' field is an array (chapter/range) or a string (specific verse)
     if (Array.isArray(data.he)) {
         if (isVerseLevel) {
-            return data.he.join(' ');  // Join array of strings into a single string for verse-level query
+            const verseData = data.he[data.he.length - 1];  // Get the last item in the array
+            if (Array.isArray(verseData)) {
+                return verseData.join(' ');  // Join array of strings into a single string for verse-level query
+            } else {
+                return verseData;  // Return the string as is for verse-level query
+            }
         } else {
             return data.he.flat().join(' ');  // Flatten the array and join into a single string for chapter-level query
         }
