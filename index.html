@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Game</title>
+    <title>Hebrew Text Memory Game</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
         }
 
+        #description,
+        #instructions,
         #game-container,
         #comparison-container,
         #full-verse-container {
@@ -27,7 +29,19 @@
     </style>
 </head>
 <body>
-    <input type="text" id="text-input" placeholder="Enter text">
+    <div id="description">
+        <h1>Hebrew Text Memory Game</h1>
+        <p>This game will help you memorize Hebrew texts from the Sefaria database. 
+           Enter a text reference, click 'Start Game', and fill in the blanks to test your memory!</p>
+    </div>
+    <div id="instructions">
+        <h2>Instructions</h2>
+        <p>1. Enter a text reference (e.g., Genesis 1, Genesis 1:1, or Genesis 1:1-2) in the text input field.</p>
+        <p>2. Click 'Start Game' to begin. The game will display the text with some words hidden.</p>
+        <p>3. Fill in the blanks with the missing words.</p>
+        <p>4. Click 'Check Answers' to see your score and compare your answers with the correct answers.</p>
+    </div>
+    <input type="text" id="text-input" placeholder="Enter text reference (e.g., Genesis 1)">
     <button onclick="startGame()">Start Game</button>
     <div id="game-container"></div>
     <button onclick="checkAnswers()">Check Answers</button>
