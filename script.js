@@ -1,10 +1,10 @@
 let correctWords = [];
 
 async function fetchText() {
-    const textInput = document.getElementById('text-input').value;
-    const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}`);
+    const textInput = document.getElementById('text-input').value.replace(/\s+/g, '.');
+    const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}?context=0`);
     const data = await response.json();
-    return data.he;
+    return data.he.join(' ');  // Join array of strings into a single string
 }
 
 function stripHebrew(text) {
@@ -26,6 +26,8 @@ function startGame() {
             }
         });
         document.getElementById('game-container').innerHTML = gameContent;
+    }).catch(error => {
+        console.error('Error fetching text:', error);
     });
 }
 
