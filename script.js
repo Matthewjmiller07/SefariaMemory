@@ -3,10 +3,16 @@ let correctWords = [];
 async function fetchText() {
     let textInput = document.getElementById('text-input').value;
     textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
-    const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}?context=0`);
+    const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}`);
     const data = await response.json();
     console.log(data);  // Continue logging the data to the console for debugging
-    return data.he;  
+
+    // Check if the 'he' field is an array (chapter/range) or a string (specific verse)
+    if (Array.isArray(data.he)) {
+        return data.he.join(' ');  // Join array of strings into a single string
+    } else {
+        return data.he;  // Return the string as is
+    }
 }
 
 function stripHebrew(text) {
