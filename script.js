@@ -1,4 +1,5 @@
 let correctWords = [];
+let fullVerse = '';  // Global variable to hold the full verse
 
 async function fetchText() {
     let textInput = document.getElementById('text-input').value;
@@ -24,6 +25,14 @@ async function fetchText() {
     }
 }
 
+async function fetchFullVerse() {
+    let textInput = document.getElementById('text-input').value;
+    textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
+    const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}?context=0`);
+    const data = await response.json();
+    fullVerse = data.he.join(' ');  // Store the full verse for later use
+}
+
 function stripHebrew(text) {
     return text.replace(/[\u0591-\u05C7]/g, '');  // Stripping vowels and cantillation
 }
@@ -43,6 +52,7 @@ function startGame() {
             }
         });
         document.getElementById('game-container').innerHTML = gameContent;
+        fetchFullVerse();  // Fetch the full verse when starting the game
     }).catch(error => {
         console.error('Error fetching text:', error);
     });
@@ -52,11 +62,17 @@ function checkAnswers() {
     const blanks = document.querySelectorAll('.blank');
     let score = 0;
     let blankIndex = 0;
+    let comparisonContent = '';
     blanks.forEach(blank => {
         if (blank.value === correctWords[blankIndex]) {
             score++;
+            comparisonContent += `<p>Correct: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
+        } else {
+            comparisonContent += `<p>Incorrect: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
         }
         blankIndex++;
     });
-    document.getElementById('score').innerText = 'Score: ' + score;
+    document.getElementById('score').innerText = `Score: ${score} out of ${blanks.length}`;
+    document.getElementById('comparison-container').innerHTML = comparisonContent;
+    document.getElementById('full-verse-container').innerText = fullVerse;
 }
