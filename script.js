@@ -51,11 +51,12 @@ function startGame() {
 function checkAnswers() {
     const blanks = document.querySelectorAll('.blank');
     let score = 0;
+    let blankIndex = 0;
     blanks.forEach(blank => {
-        const index = blank.getAttribute('data-index');
-        if (blank.value === correctWords[index / 5]) {
+        if (blank.value === correctWords[blankIndex]) {
             score++;
         }
+        blankIndex++;
     });
     document.getElementById('score').innerText = 'Score: ' + score;
 }
