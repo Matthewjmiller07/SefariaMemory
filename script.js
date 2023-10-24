@@ -78,17 +78,19 @@ function startGame() {
 function checkAnswers() {
     const blanks = document.querySelectorAll('.blank');
     let score = 0;
+    let blankIndex = 0;
     let comparisonContent = '';
-    blanks.forEach((blank, index) => {
-        const blankNumber = index + 1;
-        blank.setAttribute('placeholder', `Blank #${blankNumber}`);  // Set the placeholder to show the blank number
-        blank.disabled = true;  // Optionally disable the input to prevent further changes
-        if (blank.value === correctWords[index]) {
+    blanks.forEach(blank => {
+        const blankNumber = blankIndex + 1;
+        if (blank.value === correctWords[blankIndex]) {
             score++;
-            comparisonContent += `<p style="color: green;">Blank #${blankNumber} - Correct: Your Answer: ${blank.value}, Correct Answer: ${correctWords[index]}</p>`;
+            comparisonContent += `<p style="color: green">Blank #${blankNumber} - Correct: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
         } else {
-            comparisonContent += `<p style="color: red;">Blank #${blankNumber} - Incorrect: Your Answer: ${blank.value}, Correct Answer: ${correctWords[index]}</p>`;
+            comparisonContent += `<p style="color: red">Blank #${blankNumber} - Incorrect: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
         }
+        blank.value = `Blank #${blankNumber}`;  // Set the value to show the blank number
+        blank.disabled = true;  // Optionally disable the input to prevent further changes
+        blankIndex++;
     });
     document.getElementById('score').innerText = `Score: ${score} out of ${blanks.length}`;
     document.getElementById('comparison-container').innerHTML = comparisonContent;
