@@ -79,15 +79,19 @@ function checkAnswers() {
     let blankIndex = 0;
     let comparisonContent = '';
     blanks.forEach(blank => {
+        const blankNumber = blankIndex + 1;
         if (blank.value === correctWords[blankIndex]) {
             score++;
-            comparisonContent += `<p>Correct: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
+            comparisonContent += `<p>Blank #${blankNumber} - Correct: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
         } else {
-            comparisonContent += `<p>Incorrect: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
+            comparisonContent += `<p>Blank #${blankNumber} - Incorrect: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
         }
+        blank.setAttribute('placeholder', `Blank #${blankNumber}`);  // Set the placeholder to show the blank number
+        blank.disabled = true;  // Optionally disable the input to prevent further changes
         blankIndex++;
     });
     document.getElementById('score').innerText = `Score: ${score} out of ${blanks.length}`;
     document.getElementById('comparison-container').innerHTML = comparisonContent;
     document.getElementById('full-verse-container').innerText = fullVerse;
 }
+
