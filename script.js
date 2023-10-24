@@ -37,15 +37,30 @@ function stripHebrew(text) {
     return text.replace(/[\u0591-\u05C7]/g, '');  // Stripping vowels and cantillation
 }
 
+function getBlankInterval() {
+    const difficulty = document.getElementById('difficulty').value;
+    switch (difficulty) {
+        case 'easy':
+            return 7;
+        case 'medium':
+            return 5;
+        case 'hard':
+            return 3;
+        default:
+            return 5;
+    }
+}
+
 function startGame() {
     fetchText().then(text => {
         const strippedText = stripHebrew(text);
         const words = strippedText.split(' ');
         let gameContent = '';
         correctWords = [];
+        const blankInterval = getBlankInterval();  // Get the blank interval based on difficulty
         words.forEach((word, index) => {
-            if ((index + 1) % 5 === 0) {
-                gameContent += `<input type="text" class="blank" data-index="${index}" /> `;
+            if ((index + 1) % blankInterval === 0) {
+                gameContent += `<input type="text" class="blank" data-index="${index}" placeholder="${index + 1}" /> `;
                 correctWords.push(word);
             } else {
                 gameContent += word + ' ';
