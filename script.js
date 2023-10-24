@@ -2,19 +2,19 @@ let correctWords = [];
 
 async function fetchText() {
     let textInput = document.getElementById('text-input').value;
-    // Determine if input is chapter-level or verse-level
-    const isChapterLevel = !textInput.includes(":");
-    // Replace whitespace with underscores
-    textInput = textInput.replace(/\s+/g, '_');
+    const isVerseLevel = textInput.includes(":");
+    textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
     const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}`);
     const data = await response.json();
-    console.log(data);
+    console.log(data);  // Continue logging the data to the console for debugging
 
     // Check if the 'he' field is an array (chapter/range) or a string (specific verse)
     if (Array.isArray(data.he)) {
-        // If chapter-level, join all verses in the chapter into a single string
-        // If verse-level, join only the specified verses into a single string
-        return data.he.join(' ');  // Join array of strings into a single string
+        if (isVerseLevel) {
+            return data.he.join(' ');  // Join array of strings into a single string for verse-level query
+        } else {
+            return data.he.flat().join(' ');  // Flatten the array and join into a single string for chapter-level query
+        }
     } else {
         return data.he;  // Return the string as is
     }
