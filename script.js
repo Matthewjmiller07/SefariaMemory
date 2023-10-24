@@ -2,20 +2,20 @@ let correctWords = [];
 
 async function fetchText() {
     let textInput = document.getElementById('text-input').value;
-    const isRange = textInput.includes("-");
+    const isRange = textInput.includes("-");  // Check if the input is a verse range
     textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
     const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}`);
     const data = await response.json();
-    console.log(data);
+    console.log(data);  // Continue logging the data to the console for debugging
 
+    // Adjusted the data processing to handle verse ranges
     if (Array.isArray(data.he)) {
         if (isRange) {
-            // Flatten nested arrays for verse ranges
-            const verseRangeText = data.he.map(verse => verse.join(' ')).join(' ');
-            return verseRangeText;
+            // Flatten the nested array structure for verse ranges
+            const verseData = data.he.flat(Infinity);  // Flatten all levels of nesting
+            return verseData.join(' ');  // Join array of strings into a single string for verse-level query
         } else {
-            // Join array of strings into a single string for chapter-level query
-            return data.he.join(' '); 
+            return data.he.join(' ');  // Join array of strings into a single string for chapter-level query
         }
     } else {
         return data.he;  // Return the string as is
