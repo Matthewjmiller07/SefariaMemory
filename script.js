@@ -30,7 +30,19 @@ async function fetchFullVerse() {
     textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
     const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}?context=0`);
     const data = await response.json();
-    fullVerse = data.he.join(' ');  // Store the full verse for later use
+    if (Array.isArray(data.he)) {
+        if (Array.isArray(data.he[0])) {
+            // If data.he is an array of arrays, flatten it first
+            fullVerse = data.he.flat().join(' ');
+        } else {
+            // If data.he is a flat array, join it directly
+            fullVerse = data.he.join(' ');
+        }
+    } else {
+        // If data.he is not an array, use it directly
+        fullVerse = data.he;
+    }
+    console.log('Full verse fetched:', fullVerse);  // Debugging line
 }
 
 function stripHebrew(text) {
