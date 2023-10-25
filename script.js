@@ -25,6 +25,12 @@ async function fetchText() {
     }
 }
 
+function stripHtml(html) {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || "";
+}
+
 async function fetchFullVerse() {
     let textInput = document.getElementById('text-input').value;
     textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
@@ -42,6 +48,7 @@ async function fetchFullVerse() {
         // If data.he is not an array, use it directly
         fullVerse = data.he;
     }
+    fullVerse = stripHtml(fullVerse);  // Strip HTML tags from full verse
     console.log('Full verse fetched:', fullVerse);  // Debugging line
 }
 
