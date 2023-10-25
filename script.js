@@ -3,40 +3,52 @@ let fullVerse = '';  // Global variable to hold the full verse
 let blankNumber = 0;  // Global variable to keep track of the blank number
 
 async function fetchText() {
-    const parshaSelect = document.getElementById('parsha-select');
-    const selectedParsha = parshaSelect.options[parshaSelect.selectedIndex].text;
-    const aliyahSelect = document.getElementById('aliyah-select');
-    const selectedAliyah = aliyahSelect.selectedIndex;  // Get the index of the selected Aliyah
-    const url = `https://www.hebcal.com/leyning?cfg=json&start=2023-10-21&end=2023-10-28`;
+    let textInput = document.getElementById('text-input').value;
+    const isVerseLevel = textInput.includes(":");
+    textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
+    const url = isVerseLevel ? 
+        `https://www.sefaria.org/api/texts/${textInput}?context=0` : 
+        `https://www.sefaria.org/api/texts/${textInput}`;
     const response = await fetch(url);
     const data = await response.json();
-    const parshaData = data.items.find(item => item.name.en === selectedParsha);
-    
-    if (!parshaData || !parshaData.fullkriyah) {
-        throw new Error(`Parsha ${selectedParsha} not found or no full kriyah data available.`);
-    }
-    
-    const aliyahData = parshaData.fullkriyah[selectedAliyah] || parshaData.fullkriyah;
-    const textReference = `${aliyahData.k} ${aliyahData.b}-${aliyahData.e}`;
-    return fetchVerseText(textReference);
-}
-
-async function fetchVerseText(textReference) {
-    const formattedReference = textReference.replace(/\s+/g, '_').replace(/:/g, '.');
-    const url = `https://www.sefaria.org/api/texts/${formattedReference}?context=0`;
-    const response = await fetch(url);
-    const data = await response.json();
+    console.log(data);  // Continue logging the data to the console for debugging
 
     if (Array.isArray(data.he)) {
-        return data.he.flat().join(' ');  // Flatten the array and join into a single string
+        if (isVerseLevel) {
+            const verseData = data.he.flat();  // Flatten the array
+            return verseData.join(' ');  // Join array of strings into a single string for verse-level query
+        } else {
+            return data.he.flat().join(' ');  // Flatten the array and join into a single string for chapter-level query
+        }
     } else {
         return data.he;  // Return the string as is
     }
 }
 
+function stripHtml(html) {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || "";
+}
+
 async function fetchFullVerse() {
-    const text = await fetchText();
-    fullVerse = stripHtml(text);  // Strip HTML tags from full verse
+    let textInput = document.getElementById('text-input').value;
+    textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
+    const response = await fetch(`https://www.sefaria.org/api/texts/${textInput}?context=0`);
+    const data = await response.json();
+    if (Array.isArray(data.he)) {
+        if (Array.isArray(data.he[0])) {
+            // If data.he is an array of arrays, flatten it first
+            fullVerse = data.he.flat().join(' ');
+        } else {
+            // If data.he is a flat array, join it directly
+            fullVerse = data.he.join(' ');
+        }
+    } else {
+        // If data.he is not an array, use it directly
+        fullVerse = data.he;
+    }
+    fullVerse = stripHtml(fullVerse);  // Strip HTML tags from full verse
     console.log('Full verse fetched:', fullVerse);  // Debugging line
 }
 
