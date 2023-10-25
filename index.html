@@ -51,15 +51,15 @@
     <div id="instructions">
         <h2>Instructions</h2>
         <p>1. Select a Parsha from the dropdown menu or enter a text reference (e.g., Genesis 1, Genesis 1:1, or Genesis 1:1-2) in the text input field.</p>
-        <p>2. Select a difficulty level from the dropdown menu.</p>
-        <p>3. Click 'Start Game' to begin. The game will display the text with some words hidden based on the selected difficulty.</p>
-        <p>4. Fill in the blanks with the missing words.</p>
-        <p>5. Click 'Check Answers' to see your score and compare your answers with the correct answers.</p>
+        <p>2. Select an Aliyah or the full Parsha.</p>
+        <p>3. Select a difficulty level from the dropdown menu.</p>
+        <p>4. Click 'Start Game' to begin. The game will display the text with some words hidden based on the selected difficulty.</p>
+        <p>5. Fill in the blanks with the missing words.</p>
+        <p>6. Click 'Check Answers' to see your score and compare your answers with the correct answers.</p>
     </div>
     <div class="input-group">
         <span class="input-label">Select a Parsha:</span>
         <select id="parsha-select" onchange="updateTextInput()">
-            <option value="">-- Select Parsha --</option>
             <option value="Genesis 1:1–6:8">Bereshit</option>
             <option value="Genesis 6:9–11:32">Noach</option>
             <option value="Genesis 12:1–17:27">Lech-Lecha</option>
@@ -117,6 +117,12 @@
         </select>
     </div>
     <div class="input-group">
+        <span class="input-label">Select an Aliyah:</span>
+        <select id="aliyah-select" onchange="updateTextInput()">
+            <!-- Aliyah options will be populated dynamically -->
+        </select>
+    </div>
+    <div class="input-group">
         <span class="input-label">- OR - Enter text reference (e.g., Genesis 1):</span>
         <input type="text" id="text-input" placeholder="Enter text reference">
     </div>
@@ -136,11 +142,47 @@
     <div id="full-verse-container"></div> <!-- Container for displaying the full verse -->
     <script src="script.js"></script>
     <script>
-        // Function to update the text input field when a Parsha is selected
-        function updateTextInput() {
+        async function updateTextInput() {
             const parshaSelect = document.getElementById('parsha-select');
+            const aliyahSelect = document.getElementById('aliyah-select');
             const textInput = document.getElementById('text-input');
-            textInput.value = parshaSelect.value;
+            const selectedParsha = parshaSelect.options[parshaSelect.selectedIndex].text;
+            
+            try {
+                const verseRanges = await fetchVerseRanges(selectedParsha);
+                // Populate Aliyah dropdown
+                aliyahSelect.innerHTML = `<option value="">-- Select Aliyah --</option>
+                                          <option value="${verseRanges.fullParsha}">Full Parsha</option>`;
+                verseRanges.aliyot.forEach((aliyah, index) => {
+                    aliyahSelect.innerHTML += `<option value="${aliyah}">Aliyah ${index + 1}</option>`;
+                });
+                // Update text input field based on selected Aliyah
+                textInput.value = aliyahSelect.value || parshaSelect.value;
+            } catch (error) {
+                console.error('Failed to fetch verse ranges:', error);
+            }
+        }
+
+        document.getElementById('aliyah-select').addEventListener('change', function() {
+            const textInput = document.getElementById('text-input');
+            textInput.value = this.value;
+        });
+
+        async function fetchVerseRanges(parshaName) {
+            const response = await fetch(`https://www.hebcal.com/leyning?cfg=json&start=2023-10-21&end=2023-10-28`);
+            const data = await response.json();
+            const parshaData = data.items.find(item => item.name.en === parshaName);
+            
+            if (parshaData && parshaData.fullkriyah) {
+                const fullParsha = `${parshaData.fullkriyah.k} ${parshaData.fullkriyah.b}-${parshaData.fullkriyah.e}`;
+                const aliyot = Object.keys(parshaData.fullkriyah).map(aliyahNumber => {
+                    const { k: book, b: startVerse, e: endVerse } = parshaData.fullkriyah[aliyahNumber];
+                    return `${book} ${startVerse}-${endVerse}`;
+                });
+                return { fullParsha, aliyot };
+            } else {
+                throw new Error(`Parsha ${parshaName} not found or no full kriyah data available.`);
+            }
         }
     </script>
 </body>
