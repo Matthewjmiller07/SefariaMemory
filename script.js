@@ -53,7 +53,16 @@ async function fetchFullVerse() {
 }
 
 function stripHebrew(text) {
-    return text.replace(/[\u0591-\u05C7]/g, '');  // Stripping vowels and cantillation
+    // Regular expression to match Hebrew vowels, cantillation marks, and other diacritics
+    const regex = /[\u0591-\u05BD\u05BF-\u05C5\u05C7]/g;
+
+    // Replace these characters with an empty string
+    const strippedText = text.replace(regex, '');
+
+    // Replace any instance of multiple spaces with a single space
+    const normalizedText = strippedText.replace(/\s+/g, ' ');
+
+    return normalizedText;
 }
 
 function getBlankInterval() {
