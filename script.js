@@ -82,7 +82,8 @@ function getBlankInterval() {
 function startGame() {
     blankNumber = 0;  // Reset the blank number at the start of each game
     fetchText().then(text => {
-        const strippedText = stripHebrew(text);
+        const noHtmlText = stripHtml(text);  // Strip HTML tags from text
+        const strippedText = stripHebrew(noHtmlText);  // Strip vowels and cantillation
         const words = strippedText.split(' ');
         let gameContent = '';
         correctWords = [];
