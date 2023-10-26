@@ -89,7 +89,7 @@ function startGame() {
         correctWords = [];
         const blankInterval = getBlankInterval();  // Get the blank interval based on difficulty
         words.forEach((word, index) => {
-            if ((index + 1) % blankInterval === 0) {
+            if ((index + 1) % blankInterval === 0 && !word.includes('{')) {
                 blankNumber++;  // Increment the blank number
                 gameContent += `<input type="text" class="blank" data-index="${index}" /> `;
                 correctWords.push(word);
@@ -103,6 +103,7 @@ function startGame() {
         console.error('Error fetching text:', error);
     });
 }
+
 
 function checkAnswers() {
     const blanks = document.querySelectorAll('.blank');
