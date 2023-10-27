@@ -143,10 +143,16 @@ function startGame() {
         let [book, chapter, verseRange] = document.getElementById('text-input').value.split(/[ :]/);
         let verseStart, verseEnd;
 
-        if (verseRange && (verseRange.includes('-') || verseRange.includes('–'))) {
-            [verseStart, verseEnd] = verseRange.split(/[-–]/).map(Number);
+        if (verseRange) {
+            if (verseRange.includes('-') || verseRange.includes('–')) {
+                [verseStart, verseEnd] = verseRange.split(/[-–]/).map(Number);
+            } else {
+                verseStart = verseEnd = Number(verseRange);
+            }
         } else {
-            verseStart = verseEnd = Number(verseRange);
+            // If verseRange is not provided, use bibleStructure to determine the range of verses for the specified chapter
+            verseStart = 1;
+            verseEnd = bibleStructure[book][Number(chapter)];
         }
 
         let currentChapter = Number(chapter);
@@ -170,7 +176,7 @@ function startGame() {
             if (blankInterval === 1) {
                 words.forEach(word => {
                     blankNumber++;
-                    gameContent += `<input type="text" class="blank" data-index="${blankNumber}" value="${blankNumber}" onfocus="this.value=''" /> `;
+                    gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
                     correctWords.push(word);
                 });
             } else {
@@ -186,7 +192,7 @@ function startGame() {
                 words.forEach((word, index) => {
                     if (isBlanked[index]) {
                         blankNumber++;
-                        gameContent += `<input type="text" class="blank" data-index="${blankNumber}" value="${blankNumber}" onfocus="this.value=''" /> `;
+                        gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
                         correctWords.push(word);
                     } else {
                         gameContent += word + ' ';
@@ -194,7 +200,7 @@ function startGame() {
                 });
             }
 
-            gameContent += '</div><br>';  // Line break added here
+            gameContent += '</div><br>';  // Added a line break between verses
             currentVerse += 1;  
         });
 
@@ -204,6 +210,7 @@ function startGame() {
         console.error('Error fetching text:', error);
     });
 }
+
 
 
 
