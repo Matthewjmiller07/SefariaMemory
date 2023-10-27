@@ -143,8 +143,6 @@ function startGame() {
         let [book, chapter, verseRange] = document.getElementById('text-input').value.split(/[ :]/);
         let verseStart, verseEnd;
 
-        
-
         if (verseRange && (verseRange.includes('-') || verseRange.includes('–'))) {
             [verseStart, verseEnd] = verseRange.split(/[-–]/).map(Number);
         } else {
@@ -172,7 +170,7 @@ function startGame() {
             if (blankInterval === 1) {
                 words.forEach(word => {
                     blankNumber++;
-                    gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+                    gameContent += `<input type="text" class="blank" data-index="${blankNumber}" value="${blankNumber}" onfocus="this.value=''" /> `;
                     correctWords.push(word);
                 });
             } else {
@@ -188,7 +186,7 @@ function startGame() {
                 words.forEach((word, index) => {
                     if (isBlanked[index]) {
                         blankNumber++;
-                        gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+                        gameContent += `<input type="text" class="blank" data-index="${blankNumber}" value="${blankNumber}" onfocus="this.value=''" /> `;
                         correctWords.push(word);
                     } else {
                         gameContent += word + ' ';
@@ -206,6 +204,7 @@ function startGame() {
         console.error('Error fetching text:', error);
     });
 }
+
 
 
 
