@@ -194,7 +194,7 @@ function startGame() {
                 });
             }
 
-            gameContent += '</div>';
+            gameContent += '</div><br>';  // Line break added here
             currentVerse += 1;  
         });
 
@@ -204,6 +204,7 @@ function startGame() {
         console.error('Error fetching text:', error);
     });
 }
+
 
 
 
