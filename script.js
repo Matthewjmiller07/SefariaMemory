@@ -221,17 +221,32 @@ function stripVowels(str) {
     return str.replace(/[\u0591-\u05C7]/g, '');
 }
 
+// Updated checkAnswers function
 function checkAnswers() {
     const blanks = document.querySelectorAll('.blank');
     let score = 0;
     let blankIndex = 0;
     let comparisonContent = '';
 
+    if (!correctWords || correctWords.length === 0) {
+        console.error('correctWords array is empty');
+        alert('An error occurred. Please reload the game.');
+        return;
+    }
+
     blanks.forEach(blank => {
         const blankNumber = blankIndex + 1;
-        const userAnswer = stripVowels(blank.value);  // Strip vowels from the user answer
+
+        if (!correctWords[blankIndex]) {
+            console.error(`No correct word for blank ${blankNumber}`);
+            comparisonContent += `<p style="color: red">Blank #${blankNumber} - Error: No correct word available.</p>`;
+            blankIndex++;
+            return;
+        }
+
+        const userAnswer = blank.value ? stripVowels(blank.value) : ''; // Check for undefined or null before stripping vowels
         const correctAnswer = correctWords[blankIndex];
-        const strippedCorrectAnswer = stripVowels(correctAnswer);  // Strip vowels from the correct answer
+        const strippedCorrectAnswer = correctAnswer ? stripVowels(correctAnswer) : ''; // Check for undefined or null before stripping vowels
 
         if (userAnswer === strippedCorrectAnswer) {
             score++;
@@ -239,14 +254,45 @@ function checkAnswers() {
         } else {
             comparisonContent += `<p style="color: red">Blank #${blankNumber} - Incorrect: Your Answer: ${blank.value}, Correct Answer: ${correctAnswer}</p>`;
         }
-        blank.value = `Blank #${blankNumber}`;  // Set the value to show the blank number
-        blank.disabled = true;  // Optionally disable the input to prevent further changes
+        blank.value = `Blank #${blankNumber}`;
+        blank.disabled = true;
         blankIndex++;
     });
+
     document.getElementById('score').innerText = `Score: ${score} out of ${blanks.length}`;
     document.getElementById('comparison-container').innerHTML = comparisonContent;
-    document.getElementById('full-verse-container').innerText = fullVerse;
+
+    const checkbox = document.getElementById('toggle-verse');
+    if (checkbox && checkbox.checked) {
+        document.getElementById('full-verse-container').innerText = fullVerse;
+    }
 }
 
 
+// Event listener for checkbox
+document.addEventListener('DOMContentLoaded', (event) => {
+    // Function to toggle the visibility of 'full-verse-container'
+    function toggleFullVerse() {
+        const fullVerseContainer = document.getElementById('full-verse-container');
+        const checkbox = document.getElementById('toggle-verse');
+        if (checkbox.checked) {
+            if (fullVerse) {
+                fullVerseContainer.style.display = 'block';
+                fullVerseContainer.innerText = fullVerse;
+            } else {
+                fetchFullVerse().then(() => {
+                    fullVerseContainer.style.display = 'block';
+                    fullVerseContainer.innerText = fullVerse;
+                });
+            }
+        } else {
+            fullVerseContainer.style.display = 'none';
+        }
+    }
 
+    // Add event listener to the checkbox
+    const checkbox = document.getElementById('toggle-verse');
+    if (checkbox) {
+        checkbox.addEventListener('change', toggleFullVerse);
+    }
+});
