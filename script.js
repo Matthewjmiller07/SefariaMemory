@@ -76,6 +76,11 @@ async function fetchFullVerse() {
 }
 
 function stripHebrew(text) {
+    const removeVowels = document.getElementById('toggle-vowels').checked;
+    if (!removeVowels) {
+        return text;  // Return the text as is if the checkbox is not checked
+    }
+
     // Regular expression to match Hebrew vowels, cantillation marks, and other diacritics
     const regex = /[\u0591-\u05BD\u05BF-\u05C5\u05C7]/g;
 
@@ -205,22 +210,27 @@ function startGame() {
 
 
 
-
-
-
+function stripVowels(str) {
+    return str.replace(/[\u0591-\u05C7]/g, '');
+}
 
 function checkAnswers() {
     const blanks = document.querySelectorAll('.blank');
     let score = 0;
     let blankIndex = 0;
     let comparisonContent = '';
+
     blanks.forEach(blank => {
         const blankNumber = blankIndex + 1;
-        if (blank.value === correctWords[blankIndex]) {
+        const userAnswer = stripVowels(blank.value);  // Strip vowels from the user answer
+        const correctAnswer = correctWords[blankIndex];
+        const strippedCorrectAnswer = stripVowels(correctAnswer);  // Strip vowels from the correct answer
+
+        if (userAnswer === strippedCorrectAnswer) {
             score++;
-            comparisonContent += `<p style="color: green">Blank #${blankNumber} - Correct: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
+            comparisonContent += `<p style="color: green">Blank #${blankNumber} - Correct: Your Answer: ${blank.value}, Correct Answer: ${correctAnswer}</p>`;
         } else {
-            comparisonContent += `<p style="color: red">Blank #${blankNumber} - Incorrect: Your Answer: ${blank.value}, Correct Answer: ${correctWords[blankIndex]}</p>`;
+            comparisonContent += `<p style="color: red">Blank #${blankNumber} - Incorrect: Your Answer: ${blank.value}, Correct Answer: ${correctAnswer}</p>`;
         }
         blank.value = `Blank #${blankNumber}`;  // Set the value to show the blank number
         blank.disabled = true;  // Optionally disable the input to prevent further changes
@@ -230,3 +240,6 @@ function checkAnswers() {
     document.getElementById('comparison-container').innerHTML = comparisonContent;
     document.getElementById('full-verse-container').innerText = fullVerse;
 }
+
+
+
