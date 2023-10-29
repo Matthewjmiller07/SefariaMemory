@@ -127,89 +127,95 @@ function splitVerses(text) {
     return verses;
 }
 
-
-
-
-
-
-function startGame() {
-    blankNumber = 0;
-    fetchText().then(data => {
-        let gameContent = '';
-        correctWords = [];
-
-        let verses = splitVerses(data.text);
-        let verseReferences = data.verseReferences;  
-        let [book, chapter, verseRange] = document.getElementById('text-input').value.split(/[ :]/);
-        let verseStart, verseEnd;
-
-        if (verseRange) {
-            if (verseRange.includes('-') || verseRange.includes('–')) {
-                [verseStart, verseEnd] = verseRange.split(/[-–]/).map(Number);
-            } else {
-                verseStart = verseEnd = Number(verseRange);
-            }
-        } else {
-            // If verseRange is not provided, use bibleStructure to determine the range of verses for the specified chapter
-            verseStart = 1;
-            verseEnd = bibleStructure[book][Number(chapter)];
-        }
-
-        let currentChapter = Number(chapter);
-        let currentVerse = verseStart;
-
-        verses.forEach((verse, verseIndex) => {
-            if (currentVerse > bibleStructure[book][currentChapter]) {
-                currentChapter += 1;
-                currentVerse = 1;
-            }
-
-            gameContent += `<div><strong>${currentChapter}:${currentVerse}</strong> `;
-
-            const quizVerse = verse.replace(/\s*{[ספ]}\s*/g, '');
-
-            const strippedVerse = stripHebrew(quizVerse);
-            const words = strippedVerse.split(' ');
-
-            const blankInterval = getBlankInterval();  
-
-            if (blankInterval === 1) {
-                words.forEach(word => {
-                    blankNumber++;
-                    gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
-                    correctWords.push(word);
-                });
-            } else {
-                const totalBlanks = Math.min(words.length, Math.floor(words.length / blankInterval));
-                const isBlanked = Array(words.length).fill(false);
-                for (let i = 0; i < totalBlanks; i++) {
-                    let index;
-                    do {
-                        index = Math.floor(Math.random() * words.length);
-                    } while (isBlanked[index] && words.length > totalBlanks);
-                    isBlanked[index] = true;
-                }
-                words.forEach((word, index) => {
-                    if (isBlanked[index]) {
-                        blankNumber++;
-                        gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
-                        correctWords.push(word);
-                    } else {
-                        gameContent += word + ' ';
-                    }
-                });
-            }
-
-            gameContent += '</div><br>';  // Added a line break between verses
-            currentVerse += 1;  
-        });
-
-        document.getElementById('game-container').innerHTML = gameContent;
-        fetchFullVerse();  
-    }).catch(error => {
-        console.error('Error fetching text:', error);
-    });
+// New function to update the total number of blanks
+        function updateTotalBlanks() {
+            const blankElements = document.querySelectorAll('.blank');  // Updated to use .blank
+            const totalBlanks = blankElements.length;
+            document.getElementById('blank-count').innerText = totalBlanks;
 }
+
+
+
+
+        function startGame() {
+            blankNumber = 0;
+            fetchText().then(data => {
+                let gameContent = '';
+                correctWords = [];
+        
+                let verses = splitVerses(data.text);
+                let verseReferences = data.verseReferences;  
+                let [book, chapter, verseRange] = document.getElementById('text-input').value.split(/[ :]/);
+                let verseStart, verseEnd;
+        
+                if (verseRange) {
+                    if (verseRange.includes('-') || verseRange.includes('–')) {
+                        [verseStart, verseEnd] = verseRange.split(/[-–]/).map(Number);
+                    } else {
+                        verseStart = verseEnd = Number(verseRange);
+                    }
+                } else {
+                    verseStart = 1;
+                    verseEnd = bibleStructure[book][Number(chapter)];
+                }
+        
+                let currentChapter = Number(chapter);
+                let currentVerse = verseStart;
+        
+                verses.forEach((verse, verseIndex) => {
+                    if (currentVerse > bibleStructure[book][currentChapter]) {
+                        currentChapter += 1;
+                        currentVerse = 1;
+                    }
+        
+                    gameContent += `<div><strong>${currentChapter}:${currentVerse}</strong> `;
+        
+                    const quizVerse = verse.replace(/\s*{[ספ]}\s*/g, '');
+        
+                    const strippedVerse = stripHebrew(quizVerse);
+                    const words = strippedVerse.split(' ');
+        
+                    const blankInterval = getBlankInterval();  
+        
+                    if (blankInterval === 1) {
+                        words.forEach(word => {
+                            blankNumber++;
+                            gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+                            correctWords.push(word);
+                        });
+                    } else {
+                        const totalBlanks = Math.min(words.length, Math.floor(words.length / blankInterval));
+                        const isBlanked = Array(words.length).fill(false);
+                        for (let i = 0; i < totalBlanks; i++) {
+                            let index;
+                            do {
+                                index = Math.floor(Math.random() * words.length);
+                            } while (isBlanked[index] && words.length > totalBlanks);
+                            isBlanked[index] = true;
+                        }
+                        words.forEach((word, index) => {
+                            if (isBlanked[index]) {
+                                blankNumber++;
+                                gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+                                correctWords.push(word);
+                            } else {
+                                gameContent += word + ' ';
+                            }
+                        });
+                    }
+        
+                    gameContent += '</div><br>';  // Added a line break between verses
+                    currentVerse += 1;  
+                });
+        
+                document.getElementById('game-container').innerHTML = gameContent;
+                updateTotalBlanks();  // Update the total number of blanks here
+                fetchFullVerse();  // Fetch the full verse for display
+            }).catch(error => {
+                console.error('Error fetching text:', error);
+            });
+        }
+        
 
 
 
