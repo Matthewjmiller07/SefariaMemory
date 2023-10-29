@@ -229,7 +229,49 @@ function stripVowels(str) {
     return str.replace(/[\u0591-\u05C7]/g, '');
 }
 
-// Updated checkAnswers function
+function isAcceptableAnswer(userAnswer, correctAnswer) {
+    const substitutions = {
+        'אלהים': ['אלקים', 'א', 'א–להים'],
+        'יהוה': ['ה׳', 'יה', 'ה']
+    };
+    return userAnswer === correctAnswer || (substitutions[correctAnswer] && substitutions[correctAnswer].includes(userAnswer));
+}
+
+function logUnicode(str) {
+    let unicodeString = '';
+    for (let i = 0; i < str.length; i++) {
+        unicodeString += str.charCodeAt(i) + ' ';
+    }
+    return unicodeString.trim();
+}
+
+// Function to remove HTML tags from a string
+function stripHtmlTags(input) {
+    return input.replace(/<\/?[^>]+(>|$)/g, "");
+}
+
+// Function to check if the user's answer is an acceptable substitute for the correct answer
+function isAcceptableAnswer(userAnswer, correctAnswer) {
+    // Remove HTML tags from the correct answer
+    const cleanedCorrectAnswer = stripHtmlTags(correctAnswer);
+    const strippedCorrectAnswer = stripVowels(cleanedCorrectAnswer);
+
+    // Check for exact match first
+    if (userAnswer === strippedCorrectAnswer) {
+        return true;
+    }
+
+    // Add additional checks for acceptable substitutes, for example:
+    // if (userAnswer === 'some acceptable substitute') {
+    //     return true;
+    // }
+
+    // TODO: Add other substitution checks here
+
+    return false;
+}
+
+// Main function to check answers
 function checkAnswers() {
     const blanks = document.querySelectorAll('.blank');
     let score = 0;
@@ -252,16 +294,19 @@ function checkAnswers() {
             return;
         }
 
-        const userAnswer = blank.value ? stripVowels(blank.value) : ''; // Check for undefined or null before stripping vowels
+        const userAnswer = blank.value ? stripVowels(blank.value.trim()) : '';
         const correctAnswer = correctWords[blankIndex];
-        const strippedCorrectAnswer = correctAnswer ? stripVowels(correctAnswer) : ''; // Check for undefined or null before stripping vowels
 
-        if (userAnswer === strippedCorrectAnswer) {
+        // Debug: Log the Unicode of the answers
+        console.log(`Debug: User answer Unicode: ${logUnicode(userAnswer)}, Correct answer Unicode: ${logUnicode(correctAnswer)}`);
+
+        if (isAcceptableAnswer(userAnswer, correctAnswer)) {
             score++;
             comparisonContent += `<p style="color: green">Blank #${blankNumber} - Correct: Your Answer: ${blank.value}, Correct Answer: ${correctAnswer}</p>`;
         } else {
             comparisonContent += `<p style="color: red">Blank #${blankNumber} - Incorrect: Your Answer: ${blank.value}, Correct Answer: ${correctAnswer}</p>`;
         }
+
         blank.value = `Blank #${blankNumber}`;
         blank.disabled = true;
         blankIndex++;
@@ -282,8 +327,10 @@ function checkAnswers() {
             localStorage.setItem('memorizedTexts', JSON.stringify(memorizedTexts));
         }
     }
-    
 }
+
+
+
 
 function displayMemorizedTexts() {
     const memorizedList = document.getElementById('memorized-list');
