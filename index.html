@@ -20,7 +20,11 @@
             max-height: 400px;  /* Fixed maximum height */
             overflow-y: auto;  /* Scroll vertical */
         }
-    
+            #memorized-list {
+            margin-left: 20px;
+            padding-left: 0;
+        }
+
             #scrollable-section {
                 height: 400px;  /* Set height as needed */
                 overflow-y: auto;
@@ -74,7 +78,7 @@
         <p>This game will help you memorize Hebrew texts from the Sefaria database. 
            Enter a text reference, select a difficulty level, click 'Start Game', 
            and fill in the blanks to test your memory!</p>
-    </div>
+    </div>  
     <div id="instructions">
         <h2>Instructions</h2>
         <p>1. Select a Parsha from the dropdown menu or enter a text reference (e.g., Genesis 1, Genesis 1:1, or Genesis 1:1-2) in the text input field.</p>
@@ -82,7 +86,13 @@
         <p>3. Click 'Start Game' to begin. The game will display the text with some words hidden based on the selected difficulty.</p>
         <p>4. Fill in the blanks with the missing words.</p>
         <p>5. Click 'Check Answers' to see your score and compare your answers with the correct answers.</p>
-    </div>  
+    </div>
+
+    <div id="memorized-texts">
+        <h2>Played Before? Find Your Memorized Texts Here:</h2>
+        <ol id="memorized-list"></ol>
+    </div>
+
    
     <div id="sticky-header">
         <div class="input-group">
