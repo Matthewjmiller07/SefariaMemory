@@ -4,7 +4,9 @@ let bibleStructure = {
   
   let correctWords = [];
   let fullVerse = '';  
-  let blankNumber = 0;  
+  let blankNumber = 0; 
+  let memorizedTexts = JSON.parse(localStorage.getItem('memorizedTexts') || '[]');
+ 
 
   async function fetchText() {
     let textInput = document.getElementById('text-input').value;
@@ -272,8 +274,30 @@ function checkAnswers() {
     if (checkbox && checkbox.checked) {
         document.getElementById('full-verse-container').innerText = fullVerse;
     }
+
+    if (score === blanks.length) {
+        const textInput = document.getElementById('text-input').value;
+        if (!memorizedTexts.includes(textInput)) {
+            memorizedTexts.push(textInput);
+            localStorage.setItem('memorizedTexts', JSON.stringify(memorizedTexts));
+        }
+    }
+    
 }
 
+function displayMemorizedTexts() {
+    const memorizedList = document.getElementById('memorized-list');
+    memorizedList.innerHTML = '';
+    memorizedTexts.forEach(text => {
+        const listItem = document.createElement('li');
+        listItem.textContent = text;
+        memorizedList.appendChild(listItem);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    displayMemorizedTexts();
+});
 
 // Event listener for checkbox
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -302,3 +326,4 @@ document.addEventListener('DOMContentLoaded', (event) => {
         checkbox.addEventListener('change', toggleFullVerse);
     }
 });
+
