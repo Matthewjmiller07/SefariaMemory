@@ -10,6 +10,10 @@
                 padding: 20px;
                 counter-reset: blanks;  /* Reset the counter */
             }
+
+            input.blank::placeholder {
+                color: white;
+            }
             
             #sticky-header {
                 position: sticky;
@@ -130,6 +134,7 @@
                     <!-- Parsha Options will be populated from JavaScript -->
                 </select>
             </div>
+            <ol id="memorized-list"></ol>
             <div class="input-group">
                 <span class="input-label">Select an Aliyah:</span>
                 <select id="aliyah-select" disabled>
@@ -180,6 +185,7 @@
             <input type="checkbox" id="toggle-verse"> Show Full Verse<br> 
             <button onclick="startGame()">Start Game</button> 
             <button onclick="checkAnswers()">Check Answers</button>
+            <button id="toggle-display">Toggle Display Mode</button>
         </div>
         <div id="full-verse-container"></div> <!-- Container for displaying the full verse -->   
     </div>
