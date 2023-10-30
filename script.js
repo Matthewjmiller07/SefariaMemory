@@ -374,3 +374,24 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 });
 
+// Populate the book dropdown
+const bookSelect = document.getElementById('book-select');
+for (const book in bibleStructure) {
+    const option = document.createElement('option');
+    option.value = book;
+    option.text = book;
+    bookSelect.appendChild(option);
+}
+
+// Update text input when a book is selected
+function updateBookSelection() {
+    const selectedBook = document.getElementById('book-select').value;
+    if (selectedBook) {
+        const firstChapter = "1";
+        const lastChapter = Object.keys(bibleStructure[selectedBook]).pop();
+        const firstVerse = "1";
+        const lastVerse = bibleStructure[selectedBook][lastChapter];
+        const textReference = `${selectedBook} ${firstChapter}:${firstVerse}-${lastChapter}:${lastVerse}`;
+        document.getElementById('text-input').value = textReference;
+    }
+}
