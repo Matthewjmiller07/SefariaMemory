@@ -12,19 +12,30 @@
             }
             
             #sticky-header {
-            position: sticky;
-            top: 0;
-            background-color: #f1f1f1; /* Optional: Background color */
-            padding: 10px;
-            z-index: 100;
-            max-height: 400px;  /* Fixed maximum height */
-            overflow-y: auto;  /* Scroll vertical */
-        }
+                position: sticky;
+                top: 0;
+                background-color: #f1f1f1; /* Optional: Background color */
+                padding: 10px;
+                z-index: 100;
+                max-height: 400px;  /* Fixed maximum height */
+                overflow-y: auto;  /* Scroll vertical */
+            }
+    
             #memorized-list {
-            margin-left: 20px;
-            padding-left: 0;
-        }
-
+                margin-left: 20px;
+                padding-left: 0;
+            }
+    
+            .flex-container {
+                display: flex;
+                justify-content: space-between;
+            }
+    
+            .input-group {
+                flex: 1;
+                margin: 0 10px;
+            }
+    
             #scrollable-section {
                 height: 400px;  /* Set height as needed */
                 overflow-y: auto;
@@ -67,11 +78,28 @@
             }
     
             .input-label {
-                display: block;
-                margin-bottom: 5px;
+                margin-right: 10px;
             }
+
+            .or-divider {
+                display: flex;
+                align-items: center;
+            }
+
+            .or-text {
+                margin: 0 10px;
+                font-weight: bold;
+            }
+
+            hr {
+                flex: 1;
+            }
+
+
+    
         </style>
     </head>
+    
 <body>
     <div id="description">
         <h1>Hebrew Text Memory Game</h1>
@@ -95,23 +123,45 @@
 
    
     <div id="sticky-header">
-        <div class="input-group">
-            <span class="input-label">Select a Parsha:</span>
-            <select id="parsha-select" onchange="updateTextInput()">
-                <!-- Parsha Options will be populated from JavaScript -->
-            </select>
+        <div class="flex-container highlighted-section">
+            <div class="input-group">
+                <span class="input-label">Select a Parsha:</span>
+                <select id="parsha-select" onchange="updateTextInput()">
+                    <!-- Parsha Options will be populated from JavaScript -->
+                </select>
+            </div>
+            <div class="input-group">
+                <span class="input-label">Select an Aliyah:</span>
+                <select id="aliyah-select" disabled>
+                    <!-- Aliyah Options will be populated from JavaScript -->
+                </select>
+            </div>
         </div>
+        
+        <div class="or-divider">
+            <hr>
+            <span class="or-text">- OR -</span>
+            <hr>
+        </div>
+
         <div class="input-group">
-            <span class="input-label">Select an Aliyah:</span>
-            <select id="aliyah-select" disabled>
-                <!-- Aliyah Options will be populated from JavaScript -->
+            <span class="input-label">Select a Book:</span>
+            <select id="book-select" onchange="updateBookSelection()">
+                <!-- Book Options will be populated from JavaScript -->
             </select>
         </div>
         
+        <div class="or-divider">
+            <hr>
+            <span class="or-text">- OR -</span>
+            <hr>
+        </div>
+
         <div class="input-group">
-            <span class="input-label">- OR - Enter text reference (e.g., Genesis 1:1-2):</span>
+            <span class="input-label">Enter text reference (e.g., Genesis 1:1-2):</span>
             <input type="text" id="text-input" placeholder="Enter text reference">
         </div>
+        
         <div class="input-group">
             <label for="difficulty" class="input-label">Select Difficulty: </label>
             <select id="difficulty">
