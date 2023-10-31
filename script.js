@@ -202,48 +202,10 @@ function splitVerses(text) {
 }
 
 
-// A simple seedable random number generator
-function seedableRandom(seed) {
-    let x = Math.sin(seed++) * 10000;
-    return x - Math.floor(x);
-  }
-  
-  // Generate a URL for the current quiz
-  function generateQuizURL(seed) {
-    const difficulty = document.getElementById('difficulty').value;
-    const textInput = document.getElementById('text-input').value;
-    const params = new URLSearchParams({
-      difficulty,
-      textInput,
-      seed
-    });
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    return url;
-  }
-  
-  // Parse the URL and set the initial game parameters
-  function parseURL() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const difficulty = urlParams.get('difficulty');
-    const textInput = urlParams.get('textInput');
-    const seed = urlParams.get('seed');
-    
-    if (difficulty) {
-      document.getElementById('difficulty').value = difficulty;
-    }
-    
-    if (textInput) {
-      document.getElementById('text-input').value = textInput;
-    }
-    
-    return seed ? parseInt(seed) : Math.floor(seedableRandom(seed) * 1000000);
-  }
+
 
         // Function to start the game
         function startGame() {
-
-            const seed = parseURL();
-
             // Set the game states
             gameStarted = true;
             answersChecked = false;
@@ -297,7 +259,7 @@ function seedableRandom(seed) {
                         for (let i = 0; i < totalBlanks; i++) {
                             let index;
                             do {
-                                index = Math.floor(seedableRandom(seed) * words.length);
+                                index = Math.floor(Math.random() * words.length);
                             } while (isBlanked[index]);
                             isBlanked[index] = true;
                         }
@@ -344,18 +306,7 @@ function seedableRandom(seed) {
         
             // Enable the "Check Answers" button when the game starts
             document.getElementById('check-answers').disabled = false;
-
-             // Generate and display the URL for the current quiz
-  const quizURL = generateQuizURL(seed);
-  console.log('Share this URL to challenge others:', quizURL);
-}
-
-window.onload = function() {
-    // This will set initial values but not start the game
-    parseURL();
-    // ... any other initialization code you might have
-}
-    
+        }
         
         
 
