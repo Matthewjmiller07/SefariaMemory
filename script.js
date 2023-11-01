@@ -11,6 +11,8 @@ let originalAnswers = [];
 let shouldStoreOriginals = true; // global flag to control whether to store original answers
 let gameStarted = false;
 let toggleModeActive = false;
+let isGameStarting = false;  // Add this variable at the top of your script
+
 
 // Populate the book dropdown
 const bookSelect = document.getElementById('book-select');
@@ -237,9 +239,12 @@ function seedRandom(seed) {
 
 // Function to get the next random number based on the current seed
 function getNextRandom() {
+    console.log('getNextRandom called, runningSeed is:', runningSeed);
     runningSeed++; // Increment runningSeed, not currentSeed
     return seedRandom(runningSeed);
 }
+
+
 
 
 // Function to parse the URL
@@ -255,15 +260,18 @@ function parseURL() {
 }
 /// Function to randomize the seed
 function randomizeSeed() {
-    currentSeed = Date.now(); // Update currentSeed to a new random value
-    runningSeed = currentSeed; // Also update runningSeed
+    currentSeed = Date.now(); // Update the seed to a new random value
     const quizURL = generateQuizURL();
     history.pushState({}, '', quizURL); // Update the URL
     startGame(); // Restart the game with the new seed
 }
 // Function to start the game
 function startGame() {
-    runningSeed = currentSeed;
+    if (isGameStarting) return;
+    isGameStarting = true;
+    console.log("startGame called. currentSeed:", currentSeed, "runningSeed:", runningSeed);
+    runningSeed = currentSeed; // Reset runningSeed to currentSeed
+    console.log("After resetting, runningSeed:", runningSeed);
     const urlParams = new URLSearchParams(window.location.search);
     const urlText = urlParams.get('text');
     const urlDifficulty = urlParams.get('difficulty');
@@ -320,6 +328,7 @@ function startGame() {
             const strippedVerse = stripHebrew(quizVerse);
             const words = strippedVerse.split(' ');
             const blankInterval = getBlankInterval(words.length);
+            isGameStarting = false;
 
 if (blankInterval === 1 || words.length < blankInterval) {
     const index = Math.floor(getNextRandom() * words.length);
@@ -386,10 +395,12 @@ if (blankInterval === 1 || words.length < blankInterval) {
 
     }).catch(error => {
         console.error('Error fetching text:', error);
+        isGameStarting = false;
     });
 
     // Enable the "Check Answers" button when the game starts
     document.getElementById('check-answers').disabled = false;
+    
 }
 
 document.getElementById('randomize-seed').addEventListener('click', randomizeSeed);
