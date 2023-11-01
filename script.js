@@ -190,21 +190,31 @@ function updateTotalBlanks() {
 let currentSeed = 0;
 
 // Function to get blank interval based on difficulty
-function getBlankInterval() {
+function getBlankInterval(verseLength) {
     const difficulty = document.getElementById('difficulty').value;
+    let interval;
     switch (difficulty) {
         case 'easy':
-            return 7;
+            interval = 7;
+            break;
         case 'medium':
-            return 5;
+            interval = 5;
+            break;
         case 'hard':
-            return 3;
+            interval = 3;
+            break;
         case 'memorize':
-            return 1;
+            interval = 1;
+            break;
         default:
-            return 5;
+            interval = 5;
     }
+    if (verseLength < interval) {
+        return 1;  // if the verse is too short, set interval to 1
+    }
+    return interval;
 }
+
 
 // Function to generate the quiz URL
 function generateQuizURL() {
@@ -212,14 +222,12 @@ function generateQuizURL() {
     params.set('text', document.getElementById('text-input').value);
     params.set('difficulty', document.getElementById('difficulty').value);
 
-    // Use currentSeed for generating URL
-    if (currentSeed === null) {
-        currentSeed = Date.now();
-    }
+    // Use currentSeed for generating URL, but no new seed generation here
     params.set('seed', currentSeed);
 
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
 }
+let runningSeed = 0; // New variable to keep track of the "running seed"
 
 // Function to seed the random number generator
 function seedRandom(seed) {
@@ -229,8 +237,8 @@ function seedRandom(seed) {
 
 // Function to get the next random number based on the current seed
 function getNextRandom() {
-    currentSeed++;
-    return seedRandom(currentSeed);
+    runningSeed++; // Increment runningSeed, not currentSeed
+    return seedRandom(runningSeed);
 }
 
 
@@ -245,21 +253,31 @@ function parseURL() {
     if (difficulty) document.getElementById('difficulty').value = difficulty;
     if (seed) currentSeed = Number(seed);  // Update currentSeed from URL
 }
-// Function to randomize the seed
+/// Function to randomize the seed
 function randomizeSeed() {
-    currentSeed = Date.now(); // Update the seed to a new random value
+    currentSeed = Date.now(); // Update currentSeed to a new random value
+    runningSeed = currentSeed; // Also update runningSeed
     const quizURL = generateQuizURL();
     history.pushState({}, '', quizURL); // Update the URL
     startGame(); // Restart the game with the new seed
 }
 // Function to start the game
 function startGame() {
-    // Parse the URL to get the initial parameters
-    parseURL();
+    runningSeed = currentSeed;
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlText = urlParams.get('text');
+    const urlDifficulty = urlParams.get('difficulty');
 
-    const quizURL = generateQuizURL();
-    history.pushState({}, '', quizURL);
-    
+    const inputText = document.getElementById('text-input').value;
+    const inputDifficulty = document.getElementById('difficulty').value;
+
+    // Only update URL if input values differ from URL values
+    if (inputText !== urlText || inputDifficulty !== urlDifficulty) {
+        const quizURL = generateQuizURL();
+        history.pushState({}, '', quizURL); // Update the URL
+    }
+
+
     // Set the game states
     gameStarted = true;
     answersChecked = false;
@@ -301,35 +319,40 @@ function startGame() {
             const quizVerse = verse.replace(/\s*{[ספ]}\s*/g, '');
             const strippedVerse = stripHebrew(quizVerse);
             const words = strippedVerse.split(' ');
-            const blankInterval = getBlankInterval();
+            const blankInterval = getBlankInterval(words.length);
 
-            if (blankInterval === 1) {
-                words.forEach(word => {
-                    blankNumber++;
-                    gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
-                    correctWords.push(word);
-                });
-            } else {
-                const totalBlanks = Math.min(words.length, Math.floor(words.length / blankInterval));
-                const isBlanked = Array(words.length).fill(false);
-                for (let i = 0; i < totalBlanks; i++) {
-                    let index;
-                    do {
-                        index = Math.floor(getNextRandom() * words.length);
-                    } while (isBlanked[index]);
-                    isBlanked[index] = true;  // This line was missing
-                }
+if (blankInterval === 1 || words.length < blankInterval) {
+    const index = Math.floor(getNextRandom() * words.length);
+    words.forEach((word, i) => {
+        if (i === index) {
+            blankNumber++;
+            gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+            correctWords.push(word);
+        } else {
+            gameContent += word + ' ';
+        }
+    });
+} else {
+    const totalBlanks = Math.min(words.length, Math.floor(words.length / blankInterval));
+    const isBlanked = Array(words.length).fill(false);
+    for (let i = 0; i < totalBlanks; i++) {
+        let index;
+        do {
+            index = Math.floor(getNextRandom() * words.length);
+        } while (isBlanked[index]);
+        isBlanked[index] = true;
+    }
 
-                words.forEach((word, index) => {
-                    if (isBlanked[index]) {
-                        blankNumber++;
-                        gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
-                        correctWords.push(word);
-                    } else {
-                        gameContent += word + ' ';
-                    }
-                });
-            }
+    words.forEach((word, index) => {
+        if (isBlanked[index]) {
+            blankNumber++;
+            gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+            correctWords.push(word);
+        } else {
+            gameContent += word + ' ';
+        }
+    });
+}
             gameContent += '</div><br>';
             currentVerse += 1;
         });
@@ -374,11 +397,8 @@ document.getElementById('randomize-seed').addEventListener('click', randomizeSee
 // When the window loads, parse the URL to set initial parameters
 window.onload = function() {
     parseURL();
+    runningSeed = currentSeed; // Initialize runningSeed when the window loads
 }
-
-        
-        
-
 
 
 
