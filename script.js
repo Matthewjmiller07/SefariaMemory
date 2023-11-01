@@ -160,21 +160,7 @@ function stripHebrew(text) {
     return normalizedText;
 }
 
-function getBlankInterval() {
-    const difficulty = document.getElementById('difficulty').value;
-    switch (difficulty) {
-        case 'easy':
-            return 7;
-        case 'medium':
-            return 5;
-        case 'hard':
-            return 3;
-        case 'memorize':
-            return 1;  // Every word will be a blank in memorize mode
-        default:
-            return 5;
-    }
-}
+
 
 function splitVerses(text) {
     const verses = [];
@@ -195,118 +181,201 @@ function splitVerses(text) {
 }
 
 // New function to update the total number of blanks
-        function updateTotalBlanks() {
-            const blankElements = document.querySelectorAll('.blank');  // Updated to use .blank
-            const totalBlanks = blankElements.length;
-            document.getElementById('blank-count').innerText = totalBlanks;
+function updateTotalBlanks() {
+    const blankElements = document.querySelectorAll('.blank');  // Updated to use .blank
+    const totalBlanks = blankElements.length;
+    document.getElementById('blank-count').innerText = totalBlanks;
+}
+// Initialize currentSeed to any initial value
+let currentSeed = 0;
+
+// Function to get blank interval based on difficulty
+function getBlankInterval() {
+    const difficulty = document.getElementById('difficulty').value;
+    switch (difficulty) {
+        case 'easy':
+            return 7;
+        case 'medium':
+            return 5;
+        case 'hard':
+            return 3;
+        case 'memorize':
+            return 1;
+        default:
+            return 5;
+    }
+}
+
+// Function to generate the quiz URL
+function generateQuizURL() {
+    const params = new URLSearchParams();
+    params.set('text', document.getElementById('text-input').value);
+    params.set('difficulty', document.getElementById('difficulty').value);
+
+    // Use currentSeed for generating URL
+    if (currentSeed === null) {
+        currentSeed = Date.now();
+    }
+    params.set('seed', currentSeed);
+
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+}
+
+// Function to seed the random number generator
+function seedRandom(seed) {
+    let x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+}
+
+// Function to get the next random number based on the current seed
+function getNextRandom() {
+    currentSeed++;
+    return seedRandom(currentSeed);
 }
 
 
+// Function to parse the URL
+function parseURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const text = urlParams.get('text');
+    const difficulty = urlParams.get('difficulty');
+    const seed = urlParams.get('seed');
 
+    if (text) document.getElementById('text-input').value = text;
+    if (difficulty) document.getElementById('difficulty').value = difficulty;
+    if (seed) currentSeed = Number(seed);  // Update currentSeed from URL
+}
+// Function to randomize the seed
+function randomizeSeed() {
+    currentSeed = Date.now(); // Update the seed to a new random value
+    const quizURL = generateQuizURL();
+    history.pushState({}, '', quizURL); // Update the URL
+    startGame(); // Restart the game with the new seed
+}
+// Function to start the game
+function startGame() {
+    // Parse the URL to get the initial parameters
+    parseURL();
 
-        // Function to start the game
-        function startGame() {
-            // Set the game states
-            gameStarted = true;
-            answersChecked = false;
+    const quizURL = generateQuizURL();
+    history.pushState({}, '', quizURL);
+    
+    // Set the game states
+    gameStarted = true;
+    answersChecked = false;
+
+    // Reset the blank counter
+    blankNumber = 0;
+
+    // Fetch the text
+    fetchText().then(data => {
         
-            // Reset the blank counter
-            blankNumber = 0;
-        
-            // Fetch the text
-            fetchText().then(data => {
-                let gameContent = '';
-                correctWords = [];
-                let verses = splitVerses(data.text);
-                let [book, chapter, verseRange] = document.getElementById('text-input').value.split(/[ :]/);
-                let verseStart, verseEnd;
-        
-                if (verseRange) {
-                    if (verseRange.includes('-') || verseRange.includes('–')) {
-                        [verseStart, verseEnd] = verseRange.split(/[-–]/).map(Number);
-                    } else {
-                        verseStart = verseEnd = Number(verseRange);
-                    }
-                } else {
-                    verseStart = 1;
-                    verseEnd = bibleStructure[book][Number(chapter)];
-                }
-        
-                let currentChapter = Number(chapter);
-                let currentVerse = verseStart;
-        
-                verses.forEach((verse, verseIndex) => {
-                    if (currentVerse > bibleStructure[book][currentChapter]) {
-                        currentChapter += 1;
-                        currentVerse = 1;
-                    }
-        
-                    gameContent += `<div><strong>${currentChapter}:${currentVerse}</strong> `;
-                    const quizVerse = verse.replace(/\s*{[ספ]}\s*/g, '');
-                    const strippedVerse = stripHebrew(quizVerse);
-                    const words = strippedVerse.split(' ');
-                    const blankInterval = getBlankInterval();
-        
-                    if (blankInterval === 1) {
-                        words.forEach(word => {
-                            blankNumber++;
-                            gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
-                            correctWords.push(word);
-                        });
-                    } else {
-                        const totalBlanks = Math.min(words.length, Math.floor(words.length / blankInterval));
-                        const isBlanked = Array(words.length).fill(false);
-                        for (let i = 0; i < totalBlanks; i++) {
-                            let index;
-                            do {
-                                index = Math.floor(Math.random() * words.length);
-                            } while (isBlanked[index]);
-                            isBlanked[index] = true;
-                        }
-                        words.forEach((word, index) => {
-                            if (isBlanked[index]) {
-                                blankNumber++;
-                                gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
-                                correctWords.push(word);
-                            } else {
-                                gameContent += word + ' ';
-                            }
-                        });
-                    }
-                    gameContent += '</div><br>';
-                    currentVerse += 1;
-                });
-        
-                // Update the game container
-                document.getElementById('game-container').innerHTML = gameContent;
-        
-                // Clear the blanks
-                const blanks = document.querySelectorAll('.blank');
-                blanks.forEach(blank => {
-                    blank.value = '';
-                    blank.disabled = false;
-                    blank.style.backgroundColor = '';
-                    blank.style.color = '';
-                });
-        
-                // Clear previous comparison content and score
-                document.getElementById('comparison-container').innerHTML = '';
-                document.getElementById('score').innerText = '';
-        
-                // Reset the answersChecked flag
-                answersChecked = false;
-        
-                // Update total blanks and fetch full verse
-                updateTotalBlanks();
-                fetchFullVerse();
-        
-            }).catch(error => {
-                console.error('Error fetching text:', error);
-            });
-        
-            // Enable the "Check Answers" button when the game starts
-            document.getElementById('check-answers').disabled = false;
+        let gameContent = '';
+        correctWords = [];
+        let verses = splitVerses(data.text);
+        let [book, chapter, verseRange] = document.getElementById('text-input').value.split(/[ :]/);
+        let verseStart, verseEnd;
+
+        if (verseRange) {
+            if (verseRange.includes('-') || verseRange.includes('–')) {
+                [verseStart, verseEnd] = verseRange.split(/[-–]/).map(Number);
+            } else {
+                verseStart = verseEnd = Number(verseRange);
+            }
+        } else {
+            verseStart = 1;
+            verseEnd = bibleStructure[book][Number(chapter)];
+
         }
+
+        let currentChapter = Number(chapter);
+        let currentVerse = verseStart;
+
+        verses.forEach((verse, verseIndex) => {
+            if (currentVerse > bibleStructure[book][currentChapter]) {
+                currentChapter += 1;
+                currentVerse = 1;
+            }
+
+            gameContent += `<div><strong>${currentChapter}:${currentVerse}</strong> `;
+            const quizVerse = verse.replace(/\s*{[ספ]}\s*/g, '');
+            const strippedVerse = stripHebrew(quizVerse);
+            const words = strippedVerse.split(' ');
+            const blankInterval = getBlankInterval();
+
+            if (blankInterval === 1) {
+                words.forEach(word => {
+                    blankNumber++;
+                    gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+                    correctWords.push(word);
+                });
+            } else {
+                const totalBlanks = Math.min(words.length, Math.floor(words.length / blankInterval));
+                const isBlanked = Array(words.length).fill(false);
+                for (let i = 0; i < totalBlanks; i++) {
+                    let index;
+                    do {
+                        index = Math.floor(getNextRandom() * words.length);
+                    } while (isBlanked[index]);
+                    isBlanked[index] = true;  // This line was missing
+                }
+
+                words.forEach((word, index) => {
+                    if (isBlanked[index]) {
+                        blankNumber++;
+                        gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+                        correctWords.push(word);
+                    } else {
+                        gameContent += word + ' ';
+                    }
+                });
+            }
+            gameContent += '</div><br>';
+            currentVerse += 1;
+        });
+
+        // Update the game container
+        document.getElementById('game-container').innerHTML = gameContent;
+
+        // Clear the blanks
+        const blanks = document.querySelectorAll('.blank');
+        blanks.forEach(blank => {
+            blank.value = '';
+            blank.disabled = false;
+            blank.style.backgroundColor = '';
+            blank.style.color = '';
+        });
+
+        // Clear previous comparison content and score
+        document.getElementById('comparison-container').innerHTML = '';
+        document.getElementById('score').innerText = '';
+
+        // Reset the answersChecked flag
+        answersChecked = false;
+
+        // Update total blanks and fetch full verse
+        updateTotalBlanks();
+        fetchFullVerse();
+
+        // Generate and display the URL for the current quiz
+        const quizURL = generateQuizURL();
+        console.log('Share this URL to challenge others:', quizURL);
+
+    }).catch(error => {
+        console.error('Error fetching text:', error);
+    });
+
+    // Enable the "Check Answers" button when the game starts
+    document.getElementById('check-answers').disabled = false;
+}
+
+document.getElementById('randomize-seed').addEventListener('click', randomizeSeed);
+
+// When the window loads, parse the URL to set initial parameters
+window.onload = function() {
+    parseURL();
+}
+
         
         
 
@@ -504,3 +573,4 @@ document.addEventListener('DOMContentLoaded', (event) => {
         checkbox.addEventListener('change', toggleFullVerse);
     }
 });
+
