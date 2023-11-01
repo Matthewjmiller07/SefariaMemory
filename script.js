@@ -12,6 +12,8 @@ let shouldStoreOriginals = true; // global flag to control whether to store orig
 let gameStarted = false;
 let toggleModeActive = false;
 let isGameStarting = false;  // Add this variable at the top of your script
+let elapsedTime = 0;
+let timerInterval = null;
 
 
 // Populate the book dropdown
@@ -290,6 +292,16 @@ function startGame() {
     gameStarted = true;
     answersChecked = false;
 
+        // Reset and start the timer
+        elapsedTime = 0;
+        document.getElementById('timer').innerText = '00:00';
+        timerInterval = setInterval(function() {
+            elapsedTime++;
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = elapsedTime % 60;
+            document.getElementById('timer').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
+
     // Reset the blank counter
     blankNumber = 0;
 
@@ -329,6 +341,8 @@ function startGame() {
             const words = strippedVerse.split(' ');
             const blankInterval = getBlankInterval(words.length);
             isGameStarting = false;
+
+           
 
 if (blankInterval === 1 || words.length < blankInterval) {
     const index = Math.floor(getNextRandom() * words.length);
@@ -396,12 +410,24 @@ if (blankInterval === 1 || words.length < blankInterval) {
     }).catch(error => {
         console.error('Error fetching text:', error);
         isGameStarting = false;
+
+        // Stop the timer in case of an error
+        stopTimer();
     });
 
     // Enable the "Check Answers" button when the game starts
     document.getElementById('check-answers').disabled = false;
     
 }
+
+function stopTimer() {
+    console.log("stopTimer function called");
+    clearInterval(timerInterval);
+    timerInterval = null;
+}
+
+
+
 
 document.getElementById('randomize-seed').addEventListener('click', randomizeSeed);
 
@@ -562,20 +588,20 @@ function toggleDisplayMode() {
 // Attach event listener to toggle display mode
 document.getElementById('toggle-display').addEventListener('click', toggleDisplayMode);
 
-// Attach event listener to check answers
-document.getElementById('check-answers').addEventListener('click', checkAnswers);
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('check-answers').addEventListener('click', function() {
+        stopTimer();
+        checkAnswers();
+    });
+});
+
+
+
 
 document.addEventListener('DOMContentLoaded', function() {
     displayMemorizedTexts();
 });
 
-// Attach event listener to check answers
-document.getElementById('check-answers').addEventListener('click', checkAnswers);
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    displayMemorizedTexts();
-});
 
 // Event listener for checkbox
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -604,4 +630,3 @@ document.addEventListener('DOMContentLoaded', (event) => {
         checkbox.addEventListener('change', toggleFullVerse);
     }
 });
-
