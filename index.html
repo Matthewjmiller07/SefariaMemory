@@ -4,6 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Hebrew Text Memory Game</title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <style>
             body {
                 font-family: "FrankRuehl", "Noto Sans Hebrew", "David", "Tahoma", sans-serif;
@@ -123,6 +124,9 @@
     <div id="memorized-texts">
         <h2>Played Before? Find Your Memorized Texts Here:</h2>
         <ol id="memorized-list"></ol>
+        <button id="toggleVizButton">Show/Hide Visualization</button>
+        <div id="memorizationViz" style="display: none;"></div> <!-- Initially hidden -->
+
     </div>
 
    
