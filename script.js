@@ -710,15 +710,73 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Helper function to count total verses in a book
+function countTotalVersesInBook(book) {
+    let totalVerses = 0;
+    for (const chapter in bibleandMishnahStructure[book]) {
+        totalVerses += bibleandMishnahStructure[book][chapter];
+    }
+    return totalVerses;
+}
+
+// Helper function to parse a range of verses and add them to a set
+function parseAndAddVerses(book, chapterVerseRange, versesSet) {
+    const [chapter, verseRange] = chapterVerseRange.split(':');
+    const [startVerse, endVerse] = verseRange.split('-').map(Number);
+    const endVerseNumber = endVerse || startVerse; // If endVerse is undefined, it's a single verse
+
+    for (let verse = startVerse; verse <= endVerseNumber; verse++) {
+        versesSet.add(`${chapter}:${verse}`);
+    }
+}
+
+// Function to convert set of verses into a list
+function convertSetToList(versesSet) {
+    let versesList = Array.from(versesSet).sort();
+    // Further processing can be added here if needed to merge contiguous verses into ranges
+    return versesList.join(', ');
+}
+
+// Update the displayMemorizedTexts function to show percentages by book and list memorized verses
 function displayMemorizedTexts() {
     const memorizedList = document.getElementById('memorized-list');
     memorizedList.innerHTML = '';
+
+    // We will use a Map to store verses by book
+    const memorizedVersesByBook = new Map();
+
+    // First, populate the map with sets for each book
+    biblicalBooks.forEach(book => {
+        memorizedVersesByBook.set(book, new Set());
+    });
+
+    // Now, parse the memorized texts and add verses to the corresponding set
     memorizedTexts.forEach(text => {
-        const listItem = document.createElement('li');
-        listItem.textContent = text;
-        memorizedList.appendChild(listItem);
+        const [book, chapterVerseRange] = text.split(' ');
+        if (biblicalBooks.includes(book)) {
+            parseAndAddVerses(book, chapterVerseRange, memorizedVersesByBook.get(book));
+        }
+    });
+
+    // Display the books that have been partially memorized along with percentages and memorized verses
+    memorizedVersesByBook.forEach((versesSet, book) => {
+        const totalVerses = countTotalVersesInBook(book);
+        const memorizedVerses = versesSet.size;
+
+        if (memorizedVerses > 0) {
+            const percentageMemorized = (memorizedVerses / totalVerses * 100).toFixed(2);
+            const listItem = document.createElement('li');
+            const versesList = convertSetToList(versesSet);
+            listItem.textContent = `${book}: ${memorizedVerses} verses memorized (${percentageMemorized}%). Memorized verses: ${versesList}`;
+            memorizedList.appendChild(listItem);
+        }
     });
 }
+
+// Sample usage
+// Assuming memorizedTexts is an array with memorized verses like ["Genesis 1:1", "Genesis 1:1-2", ...]
+displayMemorizedTexts();
+
 
 
 function stripHebrew(text) {
