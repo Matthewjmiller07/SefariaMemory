@@ -737,6 +737,91 @@ function convertSetToList(versesSet) {
     return versesList.join(', ');
 }
 
+// Function to create the Plotly visualization
+function createMemorizationVisualization(memorizedVersesByBook) {
+    // Arrays to hold the data for Plotly
+    let books = [];
+    let memorizedVersesData = [];
+    let nonMemorizedVersesData = [];
+
+    // Populate the arrays with data only for books that have been partially memorized
+    memorizedVersesByBook.forEach((versesSet, book) => {
+        const totalVerses = countTotalVersesInBook(book);
+        const memorizedVerses = versesSet.size;
+        const nonMemorizedVerses = totalVerses - memorizedVerses;
+
+        if (memorizedVerses > 0) {
+            books.push(book);
+            memorizedVersesData.push(memorizedVerses);
+            nonMemorizedVersesData.push(nonMemorizedVerses);
+        }
+    });
+
+    // Define the trace for memorized verses in each book
+    let traceMemorizedVerses = {
+        x: memorizedVersesData,
+        y: books,
+        name: 'Memorized Verses',
+        type: 'bar',
+        orientation: 'h',
+        marker: {
+            color: 'green'
+        }
+    };
+
+    // Define the trace for non-memorized verses in each book
+    let traceNonMemorizedVerses = {
+        x: nonMemorizedVersesData,
+        y: books,
+        name: 'Non-Memorized Verses',
+        type: 'bar',
+        orientation: 'h',
+        marker: {
+            color: 'red'
+        }
+    };
+
+    let data = [traceMemorizedVerses, traceNonMemorizedVerses]; // Ensure memorized is first
+
+    let layout = {
+        title: 'Biblical Memorization Progress',
+        barmode: 'stack',
+        margin: {
+            l: 100, // Adjust left margin if book names are long
+            r: 10,
+            t: 100,
+            b: 50
+        },
+        xaxis: {
+            title: 'Number of Verses',
+        },
+        yaxis: {
+            title: 'Biblical Book',
+            automargin: true
+        }
+    };
+
+    Plotly.newPlot('memorizationViz', data, layout);
+}
+
+// Function to toggle the visualization
+function toggleVisualization() {
+    var viz = document.getElementById('memorizationViz');
+    if (viz.style.display === 'none') {
+        viz.style.display = 'block'; // Or 'inline-block' or other as needed
+        // If you want to create the plot only when the button is clicked,
+        // you can call the plotting function here
+        createMemorizationVisualization(memorizedVersesByBook);
+    } else {
+        viz.style.display = 'none';
+    }
+}
+
+// Add event listener to the button
+document.getElementById('toggleVizButton').addEventListener('click', toggleVisualization);
+
+
+
 // Update the displayMemorizedTexts function to show percentages by book and list memorized verses
 function displayMemorizedTexts() {
     const memorizedList = document.getElementById('memorized-list');
@@ -771,6 +856,8 @@ function displayMemorizedTexts() {
             memorizedList.appendChild(listItem);
         }
     });
+    // After the memorized list is updated, create the visualization
+    createMemorizationVisualization(memorizedVersesByBook);
 }
 
 // Sample usage
