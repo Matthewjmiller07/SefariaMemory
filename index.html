@@ -150,11 +150,27 @@
         </div>
 
         <div class="input-group">
-            <span class="input-label">Select a Book:</span>
-            <select id="book-select" onchange="updateBookSelection()">
-                <!-- Book Options will be populated from JavaScript -->
+            <span class="input-label">Select a Biblical Book:</span>
+            <select id="bible-book-select" onchange="updateBookSelection()">
+                <option value="">Select a Biblical book</option>
+                <!-- Biblical Book Options will be populated from JavaScript -->
             </select>
         </div>
+        
+        <div class="or-divider">
+            <hr>
+            <span class="or-text">- OR -</span>
+            <hr>
+        </div>
+
+        <div class="input-group">
+            <span class="input-label">Select a Mishnah Tractate:</span>
+            <select id="mishnah-tractate-select" onchange="updateBookSelection()">
+                <option value="">Select a Mishnah tractate</option>
+                <!-- Mishnah Tractate Options will be populated from JavaScript -->
+            </select>
+        </div>
+        
         
         <div class="or-divider">
             <hr>
@@ -183,7 +199,7 @@
                 Remove Vowels
             </label>
             <input type="checkbox" id="toggle-verse"> Show Full Verse<br> 
-            <button onclick="startGame()">Start Game</button> 
+            <button id="startGameButton">Start Game</button>
             <button id="randomize-seed">Randomize Blanks</button>
             <button id="check-answers">Check Answers</button>
             <button id="toggle-display">Toggle Display Mode</button>
