@@ -14,7 +14,8 @@ let toggleModeActive = false;
 let isGameStarting = false;  // Add this variable at the top of your script
 let elapsedTime = 0;
 let timerInterval = null;
-
+let gameContent = '';
+let textSegments;  // Define a variable to hold the segments of text
 
 // Populate the book dropdown
 const bookSelect = document.getElementById('book-select');
@@ -37,10 +38,10 @@ function updateBookSelection() {
         document.getElementById('text-input').value = textReference;
     }
 }
-  async function fetchText() {
-    let textInput = document.getElementById('text-input').value;
+
+async function fetchText(textInput, difficulty) {
     const isVerseLevel = textInput.includes(":");
-    let [book, chapter, verseRange] = textInput.split(/[ :]/);  
+    let [book, chapter, verseRange] = textInput.split(/[ :]/);
     let verseStart, verseEnd;
     if (verseRange && verseRange.includes('-')) {
         [verseStart, verseEnd] = verseRange.split('-').map(Number);
@@ -48,17 +49,19 @@ function updateBookSelection() {
         verseStart = verseEnd = Number(verseRange);
     }
 
-    if (!bibleStructure[book] || !bibleStructure[book][chapter]) {
-        alert('Invalid reference. Please check and try again.');
-        return;
-    }
-
     textInput = textInput.replace(/\s+/g, '_').replace(/:/g, '.');
     const url = isVerseLevel ? 
         `https://www.sefaria.org/api/texts/${textInput}?context=0` : 
         `https://www.sefaria.org/api/texts/${textInput}`;
+    
     const response = await fetch(url);
     const data = await response.json();
+    
+    if (data.error || !data.he) {
+        alert('Invalid reference or text not found. Please check and try again.');
+        return;
+    }
+    
     console.log(data);
 
     let verseReferences = [];
@@ -72,17 +75,40 @@ function updateBookSelection() {
         }
         return { text: verseData.join(' '), verseReferences };
     } else {
-        let chapterEndMark = ' --End of Chapter-- ';
-        let chapterText = data.he + chapterEndMark;
-        return { text: chapterText, verseReferences: [parseInt(textInput.split('.')[1] || 1)] };
+        // Removed the chapterEndMark concatenation
+        return { text: data.he, verseReferences: [parseInt(textInput.split('.')[1] || 1)] };
     }
 }
 
-
+// Consolidated function to remove HTML tags
 function stripHtml(html) {
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = html;
-    return tempDiv.textContent || tempDiv.innerText || "";
+    let text = tempDiv.textContent || tempDiv.innerText || "";
+
+    // Define an array of unwanted strings
+    const unwantedStrings = [
+        '--End of Chapter--',
+        '--Start of Chapter--',
+        // Add any other unwanted strings here
+    ];
+
+    // Remove unwanted strings from the text
+    unwantedStrings.forEach(str => {
+        text = text.replace(str, '');
+    });
+
+    // Trim the text to remove any leading or trailing white space
+    return text.trim();
+}
+
+function stripHtmlAndCleanText(text) {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = text;
+    tempDiv.querySelectorAll('[class]').forEach(el => el.removeAttribute('class'));
+    let cleanText = tempDiv.textContent || tempDiv.innerText || "";
+    cleanText = cleanText.replace(/\s*{[ספ]}\s*/g, ''); // Remove special characters
+    return cleanText.trim();
 }
 
 async function fetchFullVerse() {
@@ -102,9 +128,23 @@ async function fetchFullVerse() {
         // If data.he is not an array, use it directly
         fullVerse = data.he;
     }
-    fullVerse = stripHtml(fullVerse);  // Strip HTML tags from full verse
+    // Remove any unwanted substrings
+    fullVerse = stripHtmlAndCleanText(fullVerse);  // Clean up any unwanted strings and strip HTML
     toggleFullVerse();  // Call toggle function to update the UI after fetching
 }
+
+// Use this updated function to clean the text
+
+function stripHtmlAndCleanText(text) {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = text;
+    tempDiv.querySelectorAll('[class]').forEach(el => el.removeAttribute('class'));
+    let cleanText = tempDiv.textContent || tempDiv.innerText || "";
+    cleanText = cleanText.replace(/\s*{[ספ]}\s*/g, ''); // Remove special characters
+    return cleanText.trim();
+}
+
+
 
 // Function to toggle the visibility of 'full-verse-container'
 function toggleFullVerse() {
@@ -166,6 +206,7 @@ function stripHebrew(text) {
 
 
 
+
 function splitVerses(text) {
     const verses = [];
     // Create a regex pattern to identify the end of a verse
@@ -208,15 +249,33 @@ function getBlankInterval(verseLength) {
             interval = 3;
             break;
         case 'memorize':
-            interval = 1;
+            interval = 1; // In memorize mode, every word will be a blank.
             break;
         default:
             interval = 5;
     }
-    if (verseLength < interval) {
-        return 1;  // if the verse is too short, set interval to 1
+    // If the verse is too short, set interval to verse length to ensure only 1 blank
+    if (verseLength < interval && difficulty !== 'memorize') {
+        return verseLength; // Only one blank in the verse
     }
     return interval;
+}
+
+
+
+
+
+// Function to seed the random number generator
+function seedRandom(seed) {
+    let x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+}
+
+// Function to get the next random number based on the current seed
+function getNextRandom() {
+    console.log('getNextRandom called, runningSeed is:', runningSeed);
+    runningSeed++; // Increment runningSeed, not currentSeed
+    return seedRandom(runningSeed);
 }
 
 
@@ -233,22 +292,6 @@ function generateQuizURL() {
 }
 let runningSeed = 0; // New variable to keep track of the "running seed"
 
-// Function to seed the random number generator
-function seedRandom(seed) {
-    let x = Math.sin(seed++) * 10000;
-    return x - Math.floor(x);
-}
-
-// Function to get the next random number based on the current seed
-function getNextRandom() {
-    console.log('getNextRandom called, runningSeed is:', runningSeed);
-    runningSeed++; // Increment runningSeed, not currentSeed
-    return seedRandom(runningSeed);
-}
-
-
-
-
 // Function to parse the URL
 function parseURL() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -260,130 +303,146 @@ function parseURL() {
     if (difficulty) document.getElementById('difficulty').value = difficulty;
     if (seed) currentSeed = Number(seed);  // Update currentSeed from URL
 }
-/// Function to randomize the seed
+
+// Function to randomize the seed
 function randomizeSeed() {
-    currentSeed = Date.now(); // Update the seed to a new random value
+    currentSeed = Date.now(); // Update the seed to a new random value based on the current timestamp
+    runningSeed = currentSeed; // Reset runningSeed to the new currentSeed
     const quizURL = generateQuizURL();
-    history.pushState({}, '', quizURL); // Update the URL
+    history.pushState({}, '', quizURL); // Update the URL with the new seed
     startGame(); // Restart the game with the new seed
+}
+
+function getNextRandomFixed() {
+    return seedRandom(runningSeed);
 }
 // Function to start the game
 function startGame() {
     if (isGameStarting) return;
     isGameStarting = true;
-    console.log("startGame called. currentSeed:", currentSeed, "runningSeed:", runningSeed);
-    runningSeed = currentSeed; // Reset runningSeed to currentSeed
-    console.log("After resetting, runningSeed:", runningSeed);
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlText = urlParams.get('text');
-    const urlDifficulty = urlParams.get('difficulty');
+    let gameSeed = runningSeed;
+    const initialRunningSeed = runningSeed;
 
     const inputText = document.getElementById('text-input').value;
     const inputDifficulty = document.getElementById('difficulty').value;
+    const quizURL = generateQuizURL(); // Generate the quiz URL based on the current input values
 
-    // Only update URL if input values differ from URL values
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlText = urlParams.get('text');
+    const urlDifficulty = urlParams.get('difficulty');
     if (inputText !== urlText || inputDifficulty !== urlDifficulty) {
-        const quizURL = generateQuizURL();
-        history.pushState({}, '', quizURL); // Update the URL
+        history.pushState({}, '', quizURL);
     }
 
-
-    // Set the game states
     gameStarted = true;
     answersChecked = false;
-
-        // Reset and start the timer
-        elapsedTime = 0;
-        document.getElementById('timer').innerText = '00:00';
-        timerInterval = setInterval(function() {
-            elapsedTime++;
-            const minutes = Math.floor(elapsedTime / 60);
-            const seconds = elapsedTime % 60;
-            document.getElementById('timer').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }, 1000);
-
-    // Reset the blank counter
+    elapsedTime = 0;
     blankNumber = 0;
+    gameContent = '';
+    correctWords = [];
 
-    // Fetch the text
-    fetchText().then(data => {
-        
-        let gameContent = '';
-        correctWords = [];
-        let verses = splitVerses(data.text);
-        let [book, chapter, verseRange] = document.getElementById('text-input').value.split(/[ :]/);
-        let verseStart, verseEnd;
+    document.getElementById('timer').innerText = '00:00';
+    timerInterval = setInterval(function() {
+        elapsedTime++;
+        const minutes = Math.floor(elapsedTime / 60);
+        const seconds = elapsedTime % 60;
+        document.getElementById('timer').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }, 1000);
 
-        if (verseRange) {
-            if (verseRange.includes('-') || verseRange.includes('–')) {
-                [verseStart, verseEnd] = verseRange.split(/[-–]/).map(Number);
-            } else {
-                verseStart = verseEnd = Number(verseRange);
-            }
+    fetchText(inputText, inputDifficulty).then(data => {
+        let textSegments;
+        if (Array.isArray(data.he)) {
+            // Strip HTML and classes from each segment
+            textSegments = data.he.map(segment => stripHtmlAndCleanText(segment));
+        } else if (data.text) {
+            // Split and clean the text, then strip HTML and classes
+            textSegments = data.text.split(/׃(?: {ס}| {פ}|)|\./g)
+                                   .map(verse => stripHtmlAndCleanText(verse.trim()))
+                                   .filter(verse => verse.length > 0);
         } else {
-            verseStart = 1;
-            verseEnd = bibleStructure[book][Number(chapter)];
-
-        }
-
-        let currentChapter = Number(chapter);
-        let currentVerse = verseStart;
-
-        verses.forEach((verse, verseIndex) => {
-            if (currentVerse > bibleStructure[book][currentChapter]) {
-                currentChapter += 1;
-                currentVerse = 1;
-            }
-
-            gameContent += `<div><strong>${currentChapter}:${currentVerse}</strong> `;
-            const quizVerse = verse.replace(/\s*{[ספ]}\s*/g, '');
-            const strippedVerse = stripHebrew(quizVerse);
-            const words = strippedVerse.split(' ');
-            const blankInterval = getBlankInterval(words.length);
+            console.error('Unexpected text structure:', data);
             isGameStarting = false;
-
-           
-
-if (blankInterval === 1 || words.length < blankInterval) {
-    const index = Math.floor(getNextRandom() * words.length);
-    words.forEach((word, i) => {
-        if (i === index) {
-            blankNumber++;
-            gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
-            correctWords.push(word);
-        } else {
-            gameContent += word + ' ';
+            stopTimer();
+            return;
         }
-    });
-} else {
-    const totalBlanks = Math.min(words.length, Math.floor(words.length / blankInterval));
-    const isBlanked = Array(words.length).fill(false);
-    for (let i = 0; i < totalBlanks; i++) {
-        let index;
-        do {
-            index = Math.floor(getNextRandom() * words.length);
-        } while (isBlanked[index]);
-        isBlanked[index] = true;
-    }
 
-    words.forEach((word, index) => {
-        if (isBlanked[index]) {
-            blankNumber++;
-            gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
-            correctWords.push(word);
-        } else {
-            gameContent += word + ' ';
-        }
-    });
-}
+        const reference = parseReference(inputText);
+        let currentChapter = reference.chapter;
+        let currentVerse = reference.startVerse;
+        let labelCounter = 1; // Start with the first segment label for non-biblical texts
+
+        textSegments.forEach((segment, segmentIndex) => {
+            let verseLabel;
+            if (bibleStructure && bibleStructure[reference.book]) {
+                // Initialize currentChapter and currentVerse if they are undefined
+                currentChapter = currentChapter || 1;
+                currentVerse = currentVerse || 1;
+            
+                verseLabel = `${reference.book} ${currentChapter}:${currentVerse}`;
+                currentVerse++;
+                // When the currentVerse exceeds the number of verses in the current chapter, increment the chapter
+                if (currentVerse > bibleStructure[reference.book][currentChapter.toString()]) {
+                    currentChapter++;
+                    currentVerse = 1;
+                }
+            }
+            else {
+                // For non-biblical texts, use a simple counter for labeling
+                verseLabel = labelCounter.toString();
+                labelCounter++;
+            }
+            gameContent += `<div><strong>${verseLabel}</strong> `;
+    
+            const quizSegment = segment.replace(/\s*{[ספ]}\s*/g, '');
+            const strippedSegment = stripHebrew(quizSegment);
+            const words = strippedSegment.split(' ');
+            const blankInterval = getBlankInterval(words.length);
+        
+            // Use a local function that uses the initial running seed to ensure consistency during game setup
+            function getNextRandomForGameSetup() {
+                gameSeed++; // Increment local copy of seed
+                return seedRandom(gameSeed);
+            }
+        
+            // If we're in memorize mode, every word is a blank
+            if (blankInterval === 1) {
+                words.forEach((word, i) => {
+                    blankNumber++;
+                    gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+                    correctWords.push(word);
+                });
+            } else {
+                const totalBlanks = Math.min(words.length, Math.floor(words.length / blankInterval));
+                const isBlanked = Array(words.length).fill(false);
+                for (let i = 0; i < totalBlanks; i++) {
+                    let index;
+                    do {
+                        index = Math.floor(getNextRandomForGameSetup() * words.length);
+                    } while (isBlanked[index]);
+                    isBlanked[index] = true;
+                }
+        
+                words.forEach((word, index) => {
+                    if (isBlanked[index]) {
+                        blankNumber++;
+                        gameContent += `<input type="text" class="blank" data-index="${blankNumber}" /> `;
+                        correctWords.push(word);
+                    } else {
+                        gameContent += word + ' ';
+                    }
+                });
+            }
+        
             gameContent += '</div><br>';
-            currentVerse += 1;
         });
+          
 
-        // Update the game container
+        // After generating all segments, set the innerHTML of the game container
         document.getElementById('game-container').innerHTML = gameContent;
 
-        // Clear the blanks
+        // Now that the game has started, enable the "Check Answers" button
+        document.getElementById('check-answers').disabled = false;
+        // Clear any previous selections and disable the blanks
         const blanks = document.querySelectorAll('.blank');
         blanks.forEach(blank => {
             blank.value = '';
@@ -392,39 +451,61 @@ if (blankInterval === 1 || words.length < blankInterval) {
             blank.style.color = '';
         });
 
-        // Clear previous comparison content and score
-        document.getElementById('comparison-container').innerHTML = '';
-        document.getElementById('score').innerText = '';
-
-        // Reset the answersChecked flag
+        // Reset the answersChecked flag and other states as necessary
         answersChecked = false;
-
-        // Update total blanks and fetch full verse
         updateTotalBlanks();
         fetchFullVerse();
 
-        // Generate and display the URL for the current quiz
-        const quizURL = generateQuizURL();
+        // Display the URL for the current quiz
         console.log('Share this URL to challenge others:', quizURL);
 
+        // The game is now starting, so we can reset this flag
+        isGameStarting = false;
     }).catch(error => {
         console.error('Error fetching text:', error);
         isGameStarting = false;
-
-        // Stop the timer in case of an error
         stopTimer();
     });
-
-    // Enable the "Check Answers" button when the game starts
-    document.getElementById('check-answers').disabled = false;
-    
 }
 
-function stopTimer() {
-    console.log("stopTimer function called");
+
+
+function startTimer() {
+    // Ensure any existing timer is cleared to avoid multiple intervals running
+    if (timerInterval !== null) {
+      clearInterval(timerInterval);
+    }
+  
+    // Reset the time elapsed
+    timeElapsed = 0;
+  
+    // Update the timer every second
+    timerInterval = setInterval(() => {
+      timeElapsed += 1;
+      // Update the UI with the new time
+      document.getElementById('timer-display').textContent = formatTime(timeElapsed);
+    }, 1000); // 1000 milliseconds = 1 second
+  }
+  
+  function stopTimer() {
+    // Clear the interval to stop the timer
     clearInterval(timerInterval);
     timerInterval = null;
-}
+  }
+  
+  function formatTime(seconds) {
+    // Convert seconds into HH:MM:SS format for display
+    let hours = Math.floor(seconds / 3600);
+    let minutes = Math.floor((seconds % 3600) / 60);
+    let secs = seconds % 60;
+  
+    // Pad with zeros to ensure two digits
+    hours = String(hours).padStart(2, '0');
+    minutes = String(minutes).padStart(2, '0');
+    secs = String(secs).padStart(2, '0');
+  
+    return `${hours}:${minutes}:${secs}`;
+  }
 
 
 
@@ -437,7 +518,71 @@ window.onload = function() {
     runningSeed = currentSeed; // Initialize runningSeed when the window loads
 }
 
+// Function to parse the text reference
+function parseReference(input) {
+    const parts = input.match(/([\w\s]+)\s+(\d+):(\d+)(?:-(\d+))?/);
+    const defaultReference = {
+      book: '',
+      chapter: 1,
+      startVerse: 1,
+      endVerse: 1,
+      isBiblical: false
+    };
+  
+    if (parts) {
+      return {
+        book: parts[1],
+        chapter: parseInt(parts[2], 10),
+        startVerse: parseInt(parts[3], 10),
+        endVerse: parts[4] ? parseInt(parts[4], 10) : parseInt(parts[3], 10),
+        isBiblical: true
+      };
+    }
+  
+    return defaultReference; // Return a default structure if the pattern is not matched
+  }
 
+  function getVerseLabel(bibleStructure, reference, currentChapter, currentVerse) {
+    if (reference.isBiblical && bibleStructure[reference.book]) {
+      return `${reference.book} ${currentChapter}:${currentVerse}`;
+    } else {
+      return `Section ${currentVerse}`;
+    }
+  }
+
+  function labelVerses(textSegments, bibleStructure, inputText) {
+    const reference = parseReference(inputText);
+    let currentChapter = reference.chapter;
+    let currentVerse = reference.startVerse;
+    let labelCounter = 1; // Start with the first segment label for non-biblical texts
+  
+    return textSegments.map((segment, segmentIndex) => {
+      let verseLabel;
+      if (reference.isBiblical) {
+        // Check if the book and chapter exist in the bibleStructure
+        if (bibleStructure[reference.book] && bibleStructure[reference.book][currentChapter]) {
+          verseLabel = `${reference.book} ${currentChapter}:${currentVerse}`;
+          currentVerse++;
+          // Check if the next verse exceeds the current chapter's verse count
+          if (currentVerse > bibleStructure[reference.book][currentChapter]) {
+            currentChapter++;
+            currentVerse = 1;
+          }
+        } else {
+          // If the book or chapter does not exist in bibleStructure, treat as non-biblical
+          verseLabel = `Section ${labelCounter}`;
+          labelCounter++;
+        }
+      } else {
+        // For non-biblical texts, use a simple counter for labeling
+        verseLabel = `Section ${labelCounter}`;
+        labelCounter++;
+      }
+  
+      // Combine the segment with its label
+      return `<div><strong>${verseLabel}</strong> ${segment}</div>`;
+    });
+  }
 
 
 
@@ -476,13 +621,7 @@ function stripHtmlTags(input) {
 // Function to check if the user's answer is an acceptable substitute for the correct answer
 let displayInBlanks = true;
 
-// Main function to check answers
-// Utility function to remove HTML tags from a string
-function stripHtml(html) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    return tempDiv.textContent || tempDiv.innerText || '';
-}
+
 
 function checkAnswers() {
 
@@ -558,6 +697,7 @@ function checkAnswers() {
 } else if (answersChecked) {
     alert("You've already checked the answers.");
 }
+stopTimer();
 }
 
 function toggleDisplayMode() {
@@ -603,7 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-// Event listener for checkbox
+// Event listener for checkbox// Event listener for checkbox
 document.addEventListener('DOMContentLoaded', (event) => {
     // Function to toggle the visibility of 'full-verse-container'
     function toggleFullVerse() {
@@ -629,4 +769,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
     if (checkbox) {
         checkbox.addEventListener('change', toggleFullVerse);
     }
-});
+}); // Closing the 'DOMContentLoaded' event listener here
+
+// This event listener should be at the global scope, outside of any other functions or blocks
+document.getElementById('startGameButton').addEventListener('click', startGame);
+
+
+// This function is to be called with the user's input and the bibleStructure
+// For example: labelVerses(userInput, bibleStructure);
