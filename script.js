@@ -341,30 +341,40 @@ function startGame() {
     gameContent = '';
     correctWords = [];
 
-    document.getElementById('timer').innerText = '00:00';
-    timerInterval = setInterval(function() {
-        elapsedTime++;
-        const minutes = Math.floor(elapsedTime / 60);
-        const seconds = elapsedTime % 60;
-        document.getElementById('timer').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }, 1000);
+// Clear any existing timer before starting a new one
+if (timerInterval !== null) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+}
+
+// Start the timer
+elapsedTime = 0;
+document.getElementById('timer').innerText = '00:00';
+timerInterval = setInterval(function() {
+    elapsedTime++;
+    const minutes = Math.floor(elapsedTime / 60);
+    const seconds = elapsedTime % 60;
+    document.getElementById('timer').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}, 1000);
 
     fetchText(inputText, inputDifficulty).then(data => {
         let textSegments;
-        if (Array.isArray(data.he)) {
-            // Strip HTML and classes from each segment
-            textSegments = data.he.map(segment => stripHtmlAndCleanText(segment));
-        } else if (data.text) {
-            // Split and clean the text, then strip HTML and classes
-            textSegments = data.text.split(/׃(?: {ס}| {פ}|)|\./g)
-                                   .map(verse => stripHtmlAndCleanText(verse.trim()))
-                                   .filter(verse => verse.length > 0);
-        } else {
-            console.error('Unexpected text structure:', data);
-            isGameStarting = false;
-            stopTimer();
-            return;
-        }
+
+    // Check if the text begins with "Mishnah"
+    if (inputText.startsWith('Mishnah')) {
+        textSegments = data.text.split(':').map(verse => verse.trim()).filter(verse => verse.length > 0);
+    } else if (Array.isArray(data.he)) {
+        textSegments = data.he;
+    } else if (data.text) {
+        textSegments = data.text.split(/׃(?: {ס}| {פ}|)|\./g)
+                               .map(verse => verse.trim())
+                               .filter(verse => verse.length > 0);
+    } else {
+        console.error('Unexpected text structure:', data);
+        isGameStarting = false;
+        stopTimer();
+        return;
+    }
 
         const reference = parseReference(inputText);
         let currentChapter = reference.chapter;
@@ -458,7 +468,7 @@ function startGame() {
 
         // Display the URL for the current quiz
         console.log('Share this URL to challenge others:', quizURL);
-
+        
         // The game is now starting, so we can reset this flag
         isGameStarting = false;
     }).catch(error => {
