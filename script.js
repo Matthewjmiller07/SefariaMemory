@@ -867,22 +867,49 @@ displayMemorizedTexts();
 
 
 function stripHebrew(text) {
+    // Log the original text to see if there are any leading or trailing whitespaces
+    console.log("Original text:", JSON.stringify(text));
+
+    // First, remove HTML tags from the text
+    const textWithoutHtml = text.replace(/<[^>]+>/g, '');
+
+    // Log the text after HTML removal
+    console.log("Text without HTML:", JSON.stringify(textWithoutHtml));
+
+    // Remove HTML entities like &nbsp;
+    const textWithoutEntities = textWithoutHtml.replace(/&nbsp;|&[a-z]+;/gi, ' ');
+
+    // Log the text after entity removal
+    console.log("Text without entities:", JSON.stringify(textWithoutEntities));
+
+    // Trim leading and trailing whitespace and replace non-breaking spaces
+    const trimmedText = textWithoutEntities.replace(/^\s+|\s+$/g, '').replace(/\u00A0/g, ' ');
+
+    // Log the text after trimming
+    console.log("Trimmed text:", JSON.stringify(trimmedText));
+
     const removeVowels = document.getElementById('toggle-vowels').checked;
     if (!removeVowels) {
-        return text;  // Return the text as is if the checkbox is not checked
+        return trimmedText;  // Return the text without HTML and trimmed if the checkbox is not checked
     }
 
     // Regular expression to match Hebrew vowels, cantillation marks, and other diacritics
     const regex = /[\u0591-\u05BD\u05BF-\u05C5\u05C7]/g;
 
     // Replace these characters with an empty string
-    const strippedText = text.replace(regex, '');
+    const strippedText = trimmedText.replace(regex, '');
 
     // Replace any instance of multiple spaces with a single space
     const normalizedText = strippedText.replace(/\s+/g, ' ');
 
+    // Log the final processed text
+    console.log("Final processed text:", JSON.stringify(normalizedText));
+
     return normalizedText;
 }
+
+
+
 
 
 
