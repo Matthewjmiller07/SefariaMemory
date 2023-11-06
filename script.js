@@ -584,7 +584,7 @@ function isQuranicText(inputText) {
 
 // Helper function to fetch text from Quranic API
 async function fetchFromQuranAPI(inputText) {
-    const apiUrl = `http://api.alquran.cloud/v1/ayah/${inputText}/quran-uthmani`;
+    const apiUrl = `https://api.alquran.cloud/v1/ayah/${inputText}/quran-uthmani`;
     try {
         const response = await fetch(apiUrl);
         const data = await response.json();
