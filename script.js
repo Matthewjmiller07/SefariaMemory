@@ -1153,6 +1153,8 @@ timerInterval = setInterval(function() {
             gameContent += '</div><br>';
         });
           
+        // Update the total verses counter in the HTML
+        document.getElementById('total-verses').innerText = textSegments.length.toString();
 
         // After generating all segments, set the innerHTML of the game container
         document.getElementById('game-container').innerHTML = gameContent;
