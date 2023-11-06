@@ -574,7 +574,37 @@ document.getElementById('mishnah-tractate-select').addEventListener('change', up
 
 
 
-async function fetchText(textInput, difficulty) {
+// Helper function to determine if the text is Quranic
+function isQuranicText(inputText) {
+    // Implement logic to determine if the text is from the Quran
+    // This is a placeholder: return true if it matches the Quranic text pattern
+    const quranicPattern = /^\d+:\d+$/; // Matches patterns like "2:255"
+    return quranicPattern.test(inputText);
+}
+
+// Helper function to fetch text from Quranic API
+async function fetchFromQuranAPI(inputText) {
+    const apiUrl = `http://api.alquran.cloud/v1/ayah/${inputText}/quran-uthmani`;
+    try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (data.code === 200) {
+            // The Quran API recognizes the text and returns it
+            return { text: data.data.text }; // Just return the text for simplicity
+        } else {
+            // The Quran API does not recognize the text, return an error to try Sefaria next
+            throw new Error('Quran API does not recognize the text');
+        }
+    } catch (error) {
+        console.error('Fetch from Quran API failed:', error);
+        throw error; // Rethrow to handle in the calling function
+    }
+}
+
+// Helper function to fetch text from Sefaria API
+async function fetchFromSefaria(textInput, difficulty) {
+    // This is the existing Sefaria fetching logic
     const isVerseLevel = textInput.includes(":");
     let [book, chapter, verseRange] = textInput.split(/[ :]/);
     let verseStart, verseEnd;
@@ -593,12 +623,9 @@ async function fetchText(textInput, difficulty) {
     const data = await response.json();
     
     if (data.error || !data.he) {
-        alert('Invalid reference or text not found. Please check and try again.');
-        return;
+        throw new Error('Sefaria API does not recognize the text');
     }
     
-    console.log(data);
-
     let verseReferences = [];
     if (Array.isArray(data.he)) {
         const verseData = data.he.flat();
@@ -610,10 +637,34 @@ async function fetchText(textInput, difficulty) {
         }
         return { text: verseData.join(' '), verseReferences };
     } else {
-        // Removed the chapterEndMark concatenation
         return { text: data.he, verseReferences: [parseInt(textInput.split('.')[1] || 1)] };
     }
 }
+
+// Function to decide which API to fetch from
+async function fetchText(inputText, inputDifficulty) {
+    if (isQuranicText(inputText)) {
+        try {
+            // First, attempt to fetch from the Quranic API
+            return await fetchFromQuranAPI(inputText);
+        } catch (error) {
+            // If fetching from the Quranic API fails, log the error and proceed
+            console.log('Quran API failed, trying Sefaria API...');
+        }
+    }
+    
+    // Try the Sefaria API next
+    return fetchFromSefaria(inputText, inputDifficulty);
+}
+
+// Example usage:
+fetchText('2:255', 'medium').then(data => {
+    // Do something with the data
+}).catch(error => {
+    console.error('Error fetching text:', error);
+    // Handle the error appropriately
+});
+
 
 // Consolidated function to remove HTML tags
 function stripHtml(html) {
@@ -1023,6 +1074,10 @@ function randomizeSeed() {
 function getNextRandomFixed() {
     return seedRandom(runningSeed);
 }
+
+
+
+
 // Function to start the game
 function startGame() {
     if (isGameStarting) return;
@@ -1306,9 +1361,16 @@ function parseReference(input) {
 
 
 
-function stripVowels(str) {
-    return str.replace(/[\u0591-\u05C7]/g, '');
+  function stripVowels(str) {
+    // This pattern matches Hebrew vowels, cantillation marks, and other diacritics
+    const hebrewVowels = /[\u0591-\u05C7]/g;
+    // This pattern matches Arabic vowels (tashkeel/harakat)
+    const arabicVowels = /[\u0610-\u061A\u064B-\u065F\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g;
+
+    // Replace Hebrew and Arabic diacritics with an empty string
+    return str.replace(hebrewVowels, '').replace(arabicVowels, '');
 }
+
 
 function isAcceptableAnswer(userAnswer, correctAnswer) {
     const substitutions = {
