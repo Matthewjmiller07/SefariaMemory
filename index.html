@@ -106,6 +106,48 @@
     </head>
     
 <body>
+
+    <div id="user-info" class="hidden">
+        <!-- User info and logout will be displayed here after login -->
+        <span id="user-email-display"></span>
+        <button id="logout-button">Logout</button>
+      </div>
+    
+      <div id="register-container">
+        <h2>Register</h2>
+        <form id="register-form">
+          <div class="form-input">
+            <label for="register-email">Email:</label>
+            <input type="email" id="register-email" name="email" required>
+          </div>
+          <div class="form-input">
+            <label for="register-password">Password:</label>
+            <input type="password" id="register-password" name="password" required>
+          </div>
+          <div class="form-input">
+            <input type="submit" value="Register">
+          </div>
+        </form>
+      </div>
+    
+      <div id="login-container">
+        <h2>Login</h2>
+        <form id="login-form">
+          <div class="form-input">
+            <label for="login-email">Email:</label>
+            <input type="email" id="login-email" name="email" required>
+          </div>
+          <div class="form-input">
+            <label for="login-password">Password:</label>
+            <input type="password" id="login-password" name="password" required>
+          </div>
+          <div class="form-input">
+            <input type="submit" value="Login">
+          </div>
+        </form>
+      </div>
+    
+      <div id="error-message"></div>
     <div id="description">
         <h1>Hebrew Text Memory Game</h1>
         <p>This game will help you memorize Hebrew texts from the Sefaria database. 
@@ -219,7 +261,7 @@
     <div id="game-container"></div>
     <div id="score"></div>
     <div id="comparison-container"></div> <!-- Container for comparison results -->
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
     <script>
         // Function to update the text input field when a Parsha is selected
         function updateTextInput() {
