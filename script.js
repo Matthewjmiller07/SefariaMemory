@@ -1549,17 +1549,16 @@ function checkAnswers() {
         let blankIndex = 0;
         let comparisonContent = '';
 
-        // Clear previous comparison content
-        document.getElementById('comparison-container').innerHTML = '';
-
+        // Ensure we have the correct answers available
         if (!correctWords || correctWords.length === 0) {
             console.error('correctWords array is empty');
             alert('An error occurred. Please reload the game.');
             return;
         }
 
-        if (shouldStoreOriginals) {
-            originalAnswers = []; // Reset only if the flag is true
+        // Store the user's original answers
+        if (displayInBlanks && !toggleModeActive) {
+            originalAnswers = Array.from(blanks).map(blank => blank.value.trim());
         }
 
         blanks.forEach(blank => {
@@ -1567,49 +1566,57 @@ function checkAnswers() {
             const correctAnswer = correctWords[blankIndex];
             const sanitizedCorrectAnswer = stripHtml(correctAnswer);
 
-            // Check the answer and update the score
+            let resultText = `Blank #${blankIndex + 1} - `;
+            resultText += isAcceptableAnswer(userAnswer, correctAnswer) ? 'Correct!' : 'Incorrect!';
+            resultText += ` Your answer: ${userAnswer}; Correct answer: ${sanitizedCorrectAnswer}.`;
+
+            if (displayInBlanks) {
+                // Update the blank with the result text and set direction to LTR
+                blank.setAttribute('dir', 'ltr');
+                blank.value = resultText;
+                blank.style.backgroundColor = isAcceptableAnswer(userAnswer, correctAnswer) ? 'green' : 'red';
+                blank.style.color = 'white';
+            } else {
+                // Add the result to the comparison content
+                comparisonContent += `<div>${resultText}</div>`;
+            }
+
+            blank.disabled = true; // Disable the blank after checking the answer
             if (isAcceptableAnswer(userAnswer, correctAnswer)) {
                 score++;
-                // If displaying the result in the blanks, update the background color to green
-                if (displayInBlanks) {
-                    blank.style.backgroundColor = 'green';
-                    blank.style.color = 'white';
-                }
-            } else {
-                // If the answer is incorrect and we're displaying in blanks, update the background color to red
-                if (displayInBlanks) {
-                    blank.style.backgroundColor = 'red';
-                    blank.style.color = 'white';
-                }
             }
-            blank.disabled = true; // Disable the blank after checking the answer
-            blankIndex++; // Move to the next blank
+            blankIndex++;
         });
 
-        // Update the score display
         document.getElementById('score').innerText = `Score: ${score} out of ${blanks.length}`;
 
-        // If not displaying in blanks, show the comparison content
         if (!displayInBlanks) {
+            // Show the answers at the bottom
             document.getElementById('comparison-container').innerHTML = comparisonContent;
         }
 
-        // If the user scored 100%, add the memorized text to Firestore
         if (score === blanks.length) {
+            // If the user scored 100%, add the memorized text to Firestore
             const textInput = document.getElementById('text-input').value;
             addMemorizedText(textInput, () => {
                 // After adding the new text, fetch and display the updated list
                 getMemorizedTexts(displayMemorizedTexts);
             });
         }
-
     } else if (!gameStarted) {
         alert("Please start the game first.");
     } else if (answersChecked) {
         alert("You've already checked the answers.");
     }
-    stopTimer(); // Stop the timer regardless of the game state
+    if (!toggleModeActive) {
+        stopTimer(); // Stop the timer only if not in toggle mode
+    }
 }
+
+
+
+
+
 
 // Add memorized text to Firestore and then refresh the display
 function addMemorizedText(text, callback) {
@@ -1673,28 +1680,47 @@ function getMemorizedTexts(callback) {
 
 
 function toggleDisplayMode() {
-    toggleModeActive = true; // Activate toggle mode flag
-    // Flip the display flag
+    const blanks = document.querySelectorAll('.blank');
+    const comparisonContainer = document.getElementById('comparison-container');
+    
     displayInBlanks = !displayInBlanks;
 
-    // Re-enable all blanks and clear previous results
-    const blanks = document.querySelectorAll('.blank');
-    blanks.forEach((blank, index) => {
-        blank.setAttribute('dir', 'ltr');  // Set text direction to LTR        
-        blank.disabled = false;
-        blank.style.backgroundColor = '';
-        blank.style.color = '';
-        blank.value = originalAnswers[index] || '';  // Restore original answers
-    });
-    
-    // Clear comparison container and score
-    document.getElementById('comparison-container').innerHTML = '';
-    document.getElementById('score').innerText = '';
-
-    checkAnswers();
-    
-    toggleModeActive = false; // Deactivate toggle mode flag
+    if (!displayInBlanks) {
+        // Move answers from blanks to the bottom
+        let comparisonContent = '';
+        blanks.forEach((blank, index) => {
+            comparisonContent += `<div>${blank.value}</div>`; // Add the current value of the blank to comparison content
+            blank.value = `Blank #${index + 1}`; // Reset the value of the blank to show the blank number
+            blank.style.backgroundColor = ''; // Clear any previous colors
+            blank.style.color = '';
+            blank.removeAttribute('dir'); // Remove the LTR direction since it's just a number
+        });
+        comparisonContainer.innerHTML = comparisonContent; // Show the comparison content at the bottom
+    } else {
+        // Move answers from the bottom back to the blanks
+        const comparisonContentDivs = comparisonContainer.querySelectorAll('div');
+        comparisonContentDivs.forEach((div, index) => {
+            blanks[index].setAttribute('dir', 'ltr'); // Set text direction to LTR for the answer
+            blanks[index].value = div.textContent; // Set the blank value to the text content of the corresponding div
+            // Apply the color based on the correctness of the answer
+            if (div.textContent.includes('Correct!')) {
+                blanks[index].style.backgroundColor = 'green';
+                blanks[index].style.color = 'white';
+            } else {
+                blanks[index].style.backgroundColor = 'red';
+                blanks[index].style.color = 'white';
+            }
+        });
+        comparisonContainer.innerHTML = ''; // Clear the comparison content from the bottom
+    }
 }
+
+
+
+  
+  // You need to define the `isAcceptableAnswer` and `stripHtml` functions, 
+  // and also ensure that `originalAnswers` and `correctWords` arrays are properly maintained.
+  
 
 
 // Attach event listener to toggle display mode
