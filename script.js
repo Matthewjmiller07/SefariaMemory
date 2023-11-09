@@ -1574,12 +1574,15 @@ function checkAnswers() {
                 // Update the blank with the result text and set direction to LTR
                 blank.setAttribute('dir', 'ltr');
                 blank.value = resultText;
-                blank.style.backgroundColor = isAcceptableAnswer(userAnswer, correctAnswer) ? 'green' : 'red';
+                blank.style.backgroundColor = isAcceptableAnswer(userAnswer, correctAnswer) ? '#28a745' : '#dc3545'; // Use the updated color scheme
                 blank.style.color = 'white';
+                blank.style.borderRadius = '4px'; // Add rounded corners
+                blank.style.padding = '2px 4px'; // Add padding
+                blank.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'; // Add shadow for consistency
             } else {
                 // Add the result to the comparison content
-                comparisonContent += `<div>${resultText}</div>`;
-            }
+                comparisonContent += `<div style="background-color: ${isAcceptableAnswer(userAnswer, correctAnswer) ? '#28a745' : '#dc3545'}; color: white; border-radius: 4px; padding: 2px 4px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">${resultText}</div>`;
+            }            
 
             blank.disabled = true; // Disable the blank after checking the answer
             if (isAcceptableAnswer(userAnswer, correctAnswer)) {
@@ -1704,12 +1707,18 @@ function toggleDisplayMode() {
             blanks[index].value = div.textContent; // Set the blank value to the text content of the corresponding div
             // Apply the color based on the correctness of the answer
             if (div.textContent.includes('Correct!')) {
-                blanks[index].style.backgroundColor = 'green';
+                blanks[index].style.backgroundColor = '#28a745'; // a softer shade of green
                 blanks[index].style.color = 'white';
+                blanks[index].style.borderRadius = '4px'; // rounded corners
+                blanks[index].style.padding = '2px 4px'; // some padding
+                blanks[index].style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'; // consistent shadow
             } else {
-                blanks[index].style.backgroundColor = 'red';
+                blanks[index].style.backgroundColor = '#dc3545'; // a softer shade of red
                 blanks[index].style.color = 'white';
-            }
+                blanks[index].style.borderRadius = '4px'; // rounded corners
+                blanks[index].style.padding = '2px 4px'; // some padding
+                blanks[index].style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'; // consistent shadow
+            }            
         });
         comparisonContainer.innerHTML = ''; // Clear the comparison content from the bottom
     }
