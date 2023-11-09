@@ -1244,6 +1244,11 @@ if (timerInterval !== null) {
     clearInterval(timerInterval);
     timerInterval = null;
 }
+// Clear the comparison container
+document.getElementById('comparison-container').innerHTML = '';
+
+// Reset the score display
+document.getElementById('score').innerText = 'Score:';
 
 // Start the timer
 elapsedTime = 0;
