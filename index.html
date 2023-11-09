@@ -10,20 +10,25 @@
                 font-family: "FrankRuehl", "Noto Sans Hebrew", "David", "Tahoma", sans-serif;
                 padding: 20px;
                 counter-reset: blanks;  /* Reset the counter */
+                background: #f7f7f7; /* subtle background gradient */
+                color: #333; /* universal text color for better readability */
             }
-
+    
             input.blank::placeholder {
-                color: white;
+                color: #bbb;
             }
             
             #sticky-header {
                 position: sticky;
                 top: 0;
-                background-color: #f1f1f1; /* Optional: Background color */
+                background-color: #eaeaea; /* Subtle grey background */
+                color: #333; /* Text color for better contrast */
                 padding: 10px;
                 z-index: 100;
                 max-height: 400px;  /* Fixed maximum height */
                 overflow-y: auto;  /* Scroll vertical */
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* subtle shadow for depth */
+                border-radius: 8px; /* rounded corners */
             }
     
             #memorized-list {
@@ -44,10 +49,17 @@
             #scrollable-section {
                 height: 400px;  /* Set height as needed */
                 overflow-y: auto;
+                background: #fff; /* for content contrast */
+                padding: 10px; /* spacing inside the scrollable */
+                border-radius: 8px; /* rounded corners */
             }
     
             #game-container {
                 direction: rtl;  /* Set text direction to right-to-left */
+                background: #fff; /* contrast for the game area */
+                padding: 10px; /* spacing */
+                border-radius: 8px; /* rounded corners */
+                margin-top: 20px; /* spacing from previous elements */
             }
     
             #description,
@@ -60,6 +72,16 @@
     
             input[type="text"] {
                 width: 50%;
+                border: none; /* remove default border */
+                border-bottom: 2px solid #6c5ce7; /* underline style */
+                padding: 5px; /* input padding */
+                margin-bottom: 10px; /* space after each input */
+                transition: border-color 0.3s; /* smooth transition for focus */
+            }
+    
+            input[type="text"]:focus {
+                border-bottom-color: #e17055; /* color when focused */
+                outline: none; /* remove focus outline */
             }
     
             .blank-container {
@@ -84,24 +106,31 @@
     
             .input-label {
                 margin-right: 10px;
+                display: block; /* label appears above the input */
+                color: #6c5ce7; /* label color */
             }
-
+    
             .or-divider {
                 display: flex;
                 align-items: center;
+                margin: 20px 0; /* more space around the divider */
             }
-
+    
             .or-text {
                 margin: 0 10px;
                 font-weight: bold;
+                background: #6c5ce7;
+                color: white;
+                padding: 2px 8px;
+                border-radius: 20px; /* rounded edges for the 'or' label */
             }
-
+    
             hr {
                 flex: 1;
+                border: none;
+                height: 1px;
+                background-color: #ccc; /* line color */
             }
-
-
-    
         </style>
     </head>
     
