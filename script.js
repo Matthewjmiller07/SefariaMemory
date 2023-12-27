@@ -918,72 +918,127 @@ function convertSetToList(versesSet) {
     return versesList.join(', ');
 }
 
-// Function to create the Plotly visualization
 function createMemorizationVisualization(memorizedVersesByBook) {
+    // Define the sections of the Tanach
+    const Torah = new Set(["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy"]);
+    const Neviim = new Set(["Joshua", "Judges", "I Samuel", "II Samuel", "I Kings", "II Kings", "Isaiah", "Jeremiah", "Ezekiel", "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi"]);
+    const Ketuvim = new Set(["Psalms", "Proverbs", "Job", "Song of Songs", "Ruth", "Lamentations", "Ecclesiastes", "Esther", "Daniel", "Ezra", "Nehemiah", "I Chronicles", "II Chronicles"]);
+
     // Arrays to hold the data for Plotly
     let books = [];
     let memorizedVersesData = [];
     let nonMemorizedVersesData = [];
+    let colors = [];
 
-    // Populate the arrays with data only for books that have been partially memorized
-    memorizedVersesByBook.forEach((versesSet, book) => {
-        const totalVerses = countTotalVersesInBook(book);
-        const memorizedVerses = versesSet.size;
-        const nonMemorizedVerses = totalVerses - memorizedVerses;
+    // Counters for memorized verses in each section
+    let memorizedVersesTorah = 0;
+    let memorizedVersesNeviim = 0;
+    let memorizedVersesKetuvim = 0;
 
-        if (memorizedVerses > 0) {
+    // Use the predefined order of biblical books
+    biblicalBooks.forEach(book => {
+        if (memorizedVersesByBook.has(book)) {
+            const versesSet = memorizedVersesByBook.get(book);
+            const totalVerses = countTotalVersesInBook(book);
+            const memorizedVerses = versesSet.size;
+            const nonMemorizedVerses = totalVerses - memorizedVerses;
+
             books.push(book);
             memorizedVersesData.push(memorizedVerses);
             nonMemorizedVersesData.push(nonMemorizedVerses);
+
+            // Assign color based on section
+            if (Torah.has(book)) {
+                colors.push('blue');
+                memorizedVersesTorah += memorizedVerses;
+            } else if (Neviim.has(book)) {
+                colors.push('green');
+                memorizedVersesNeviim += memorizedVerses;
+            } else if (Ketuvim.has(book)) {
+                colors.push('red');
+                memorizedVersesKetuvim += memorizedVerses;
+            } else {
+                colors.push('grey'); // For any book not classified
+            }
         }
     });
 
-    // Define the trace for memorized verses in each book
+    // Reverse the order of the data
+    books.reverse();
+    memorizedVersesData.reverse();
+    nonMemorizedVersesData.reverse();
+    colors.reverse();
+
+    // Define the trace for memorized verses
     let traceMemorizedVerses = {
         x: memorizedVersesData,
         y: books,
         name: 'Memorized Verses',
         type: 'bar',
         orientation: 'h',
-        marker: {
-            color: 'green'
-        }
+        marker: { color: 'green' } // Consistent color for memorized verses
     };
 
-    // Define the trace for non-memorized verses in each book
+    // Define the trace for non-memorized verses
     let traceNonMemorizedVerses = {
         x: nonMemorizedVersesData,
         y: books,
         name: 'Non-Memorized Verses',
         type: 'bar',
         orientation: 'h',
-        marker: {
-            color: 'red'
-        }
+        marker: { color: 'lightgrey' }
     };
 
-    let data = [traceMemorizedVerses, traceNonMemorizedVerses]; // Ensure memorized is first
+    let data = [traceMemorizedVerses, traceNonMemorizedVerses];
 
+    // Define the layout for the chart
     let layout = {
         title: 'Biblical Memorization Progress',
         barmode: 'stack',
-        margin: {
-            l: 100, // Adjust left margin if book names are long
-            r: 10,
-            t: 100,
-            b: 50
-        },
-        xaxis: {
-            title: 'Number of Verses',
-        },
-        yaxis: {
-            title: 'Biblical Book',
-            automargin: true
-        }
+        height: 1200, // Adjust height as needed
+        margin: { l: 150, r: 10, t: 100, b: 50 },
+        xaxis: { title: 'Number of Verses' },
+        yaxis: { title: 'Biblical Book', automargin: true, tickangle: 0 },
+        annotations: [ // Repositioned annotations
+            {
+                x: 0,
+                y: books.indexOf('Genesis') + .5, // Adjusted position
+                xref: 'paper',
+                yref: 'y',
+                text: 'Torah: ' + memorizedVersesTorah + ' memorized',
+                showarrow: false,
+                font: { color: 'blue' }
+            },
+            {
+                x: 0,
+                y: books.indexOf('Joshua') + .5, // Adjusted position
+                xref: 'paper',
+                yref: 'y',
+                text: 'Neviim: ' + memorizedVersesNeviim + ' memorized',
+                showarrow: false,
+                font: { color: 'green' }
+            },
+            {
+                x: 0,
+                y: books.indexOf('Psalms') + .5, // Adjusted position
+                xref: 'paper',
+                yref: 'y',
+                text: 'Ketuvim: ' + memorizedVersesKetuvim + ' memorized',
+                showarrow: false,
+                font: { color: 'red' }
+            }
+        ]
     };
 
+    // Create the Plotly chart
     Plotly.newPlot('memorizationViz', data, layout);
 }
+
+
+
+
+
+
 
 // Function to toggle the visualization
 function toggleVisualization() {
@@ -1730,6 +1785,36 @@ function toggleDisplayMode() {
 }
 
 
+function printQuiz() {
+    const textReference = document.getElementById('text-input').value;
+    const includeComparison = confirm('Include comparison container in the printed quiz? (Yes/No)');
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    
+    // Create the content to be printed
+    const printContent = document.createElement('div');
+    printContent.innerHTML = `<h1>${textReference}</h1>`;
+    
+    if (includeComparison) {
+        const comparisonContainer = document.getElementById('comparison-container');
+        const clone = comparisonContainer.cloneNode(true);
+        printContent.appendChild(clone);
+    }
+    
+    // Append the content to the print window
+    printWindow.document.body.appendChild(printContent);
+    
+    // Print the content
+    printWindow.print();
+    
+    // Close the print window
+    printWindow.close();
+}
+
+
+// Attach the print function to the print button
+document.getElementById('print-quiz').addEventListener('click', printQuiz);
 
   
   // You need to define the `isAcceptableAnswer` and `stripHtml` functions, 
