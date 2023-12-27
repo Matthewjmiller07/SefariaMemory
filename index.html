@@ -131,8 +131,26 @@
                 height: 1px;
                 background-color: #ccc; /* line color */
             }
+
+            @media print {
+  /* Hide everything by default when printing */
+  body * {
+    visibility: hidden;
+  }
+  /* Then display the print area and modify it as needed */
+  #print-area, #print-area * {
+    visibility: visible;
+  }
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}
+
         </style>
     </head>
+    
     
 <body>
 
@@ -280,6 +298,7 @@
             <button id="randomize-seed">Randomize Blanks</button>
             <button id="check-answers">Check Answers</button>
             <button id="toggle-display">Toggle Display Mode</button>
+            <button id="print-quiz">Print Quiz</button>
             <div id="timer-container">
                 <span id="timer">00:00</span>
               </div>
