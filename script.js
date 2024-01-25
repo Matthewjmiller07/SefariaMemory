@@ -22,15 +22,69 @@ async function loadCsvData() {
     }
 }
 
+// Function to parse the text reference or range
+function parseReferenceRange(input) {
+    const bookChapterVersePattern = /([\w\s]+)\s+(\d+):(\d+)(?:-(\d+):(\d+))?/;
+    const bookChapterPattern = /([\w\s]+)\s+(\d+)(?::(\d+))?/;
+
+    let match = input.match(bookChapterVersePattern);
+    if (match) {
+        return {
+            book: match[1].trim(),
+            chapterStart: parseInt(match[2], 10),
+            verseStart: parseInt(match[3], 10),
+            chapterEnd: match[4] ? parseInt(match[4], 10) : parseInt(match[2], 10),
+            verseEnd: match[5] ? parseInt(match[5], 10) : parseInt(match[3], 10)
+        };
+    }
+
+    match = input.match(bookChapterPattern);
+    if (match) {
+        return {
+            book: match[1].trim(),
+            chapterStart: parseInt(match[2], 10),
+            verseStart: match[3] ? parseInt(match[3], 10) : 1,
+            chapterEnd: parseInt(match[2], 10),
+            verseEnd: 999 // A large number to cover the entire chapter
+        };
+    }
+
+    return null;
+}
+
+// Function to check if a reference is within the query range
+function isReferenceInRange(ref, query) {
+    if (!ref || !query) return false;
+    if (ref.book !== query.book) return false;
+
+    if (ref.chapterStart > query.chapterEnd || ref.chapterEnd < query.chapterStart) {
+        return false;
+    }
+    if (ref.chapterStart === query.chapterEnd && ref.verseStart > query.verseEnd) {
+        return false;
+    }
+    if (ref.chapterEnd === query.chapterStart && ref.verseEnd < query.verseStart) {
+        return false;
+    }
+    return true;
+}
+
+// Updated search function
 function searchBiblicalReferences(query) {
     console.log("Query:", query);
 
+    const parsedQuery = parseReferenceRange(query);
+    if (!parsedQuery) {
+        console.error("Invalid query format:", query);
+        return [];
+    }
+
     let searchResults = biblicalPlaces.filter(place => {
         let references = place['Biblical References'];
-        console.log("Checking place:", place['Place Name'], "with references:", references); // Log each place and its references
+        console.log("Checking place:", place['Place Name'], "with references:", references);
+
         if (references) {
-            let refsArray = references.split(',').map(ref => ref.trim());
-            return refsArray.includes(query);
+            return references.split(',').map(ref => parseReferenceRange(ref.trim())).some(ref => isReferenceInRange(ref, parsedQuery));
         }
         return false;
     });
@@ -38,7 +92,6 @@ function searchBiblicalReferences(query) {
     console.log("Search results:", searchResults);
     return searchResults;
 }
-
 
 function displayPlacesOnMap(places) {
     console.log("Displaying places on map:", places);
