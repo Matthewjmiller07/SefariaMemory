@@ -6,14 +6,18 @@ var map;
 async function loadCsvData() {
     console.log("Loading CSV data...");
     try {
-        const response = await fetch('biblical_places_output.csv'); // Make sure the CSV file path is correct
+        const response = await fetch('biblical_places_output.csv'); // Ensure the CSV file path is correct
         const csvText = await response.text();
+
         Papa.parse(csvText, {
             header: true,
             dynamicTyping: true,
             skipEmptyLines: true,
             complete: function(results) {
-                biblicalPlaces = results.data;
+                biblicalPlaces = results.data.map(place => ({
+                    ...place,
+                    'Confidence Score': String(place['Confidence Score']) // Convert confidence scores to strings
+                }));
                 console.log("CSV Data loaded:", biblicalPlaces.length, "records");
             }
         });
@@ -21,6 +25,7 @@ async function loadCsvData() {
         console.error("Error loading CSV data:", error);
     }
 }
+
 
 // Function to parse the text reference or range
 function parseReferenceRange(input) {
@@ -75,6 +80,7 @@ function isReferenceInRange(ref, query) {
 }
 
 // Updated search function
+// Updated search function to include confidence level filtering
 function searchBiblicalReferences(query) {
     console.log("Query:", query);
 
@@ -84,12 +90,19 @@ function searchBiblicalReferences(query) {
         return [];
     }
 
+    // Retrieve the selected confidence levels
+    const selectedConfidenceLevels = getSelectedConfidenceLevels();
+
     let searchResults = biblicalPlaces.filter(place => {
         let references = place['Biblical References'];
-        console.log("Checking place:", place['Place Name'], "with references:", references);
+        let confidenceScore = place['Confidence Score'];
 
-        if (references) {
-            return references.split(',').map(ref => parseReferenceRange(ref.trim())).some(ref => isReferenceInRange(ref, parsedQuery));
+        // Check if the place's confidence level is among the selected ones
+        if (selectedConfidenceLevels.includes(confidenceScore)) {
+            if (references) {
+                // Only proceed if references are not null or undefined
+                return references.split(',').map(ref => parseReferenceRange(ref.trim())).some(ref => isReferenceInRange(ref, parsedQuery));
+            }
         }
         return false;
     });
@@ -100,11 +113,20 @@ function searchBiblicalReferences(query) {
 
 
 
+function getSelectedConfidenceLevels() {
+    const checkboxes = document.querySelectorAll('input[name="confidence"]:checked');
+    const selectedLevels = Array.from(checkboxes).map(checkbox => checkbox.value);
+    return selectedLevels;
+}
+
+
+
+
+
 function displayPlacesOnMap(places) {
     console.log("Displaying places on map:", places);
 
     if (typeof map.eachLayer === 'function') {
-        // Clear existing markers and polygons
         map.eachLayer(function(layer) {
             if (layer instanceof L.Marker || layer instanceof L.Polygon) {
                 map.removeLayer(layer);
@@ -119,47 +141,45 @@ function displayPlacesOnMap(places) {
                 const coordPairs = place.Coordinates.split(' ');
                 const latLngPairs = coordPairs.map(coordPair => {
                     const [lat, lng] = coordPair.split(',').map(Number);
-                    return [lng, lat]; // Swap latitude and longitude if necessary
+                    return [lng, lat];
                 });
 
+                const popupContent = `<strong>${place['Place Name']}</strong><br>Confidence Score: ${place['Confidence Score']}`;
+
                 if (latLngPairs.length > 2) {
-                    // If more than two coordinate pairs, plot as a polygon
-                    console.log("Adding polygon for:", place['Place Name'], "with coordinates:", latLngPairs);
-                    var polygon = L.polygon(latLngPairs, {color: 'blue'}).bindPopup(place['Place Name']);
+                    var polygon = L.polygon(latLngPairs, {
+                        color: 'blue',
+                        fillOpacity: 0.5
+                    }).bindPopup(popupContent)
+                      .bindTooltip(place['Place Name'], {sticky: true})
+                      .on('click', function() {
+                          this.bringToFront();
+                      });
+
                     polygonsGroup.addLayer(polygon);
                 } else {
-                    // Otherwise, plot as markers
                     latLngPairs.forEach(([lat, lng]) => {
-                        console.log("Adding marker for:", place['Place Name'], "at coordinates:", [lat, lng]);
-                        var marker = L.marker([lat, lng]).bindPopup(place['Place Name']);
+                        var marker = L.marker([lat, lng]).bindPopup(popupContent);
                         markersGroup.addLayer(marker);
                     });
                 }
-            } else {
-                console.error("No coordinates found for:", place);
             }
         });
 
-        // Add the markers and polygons to the map
         markersGroup.addTo(map);
         polygonsGroup.addTo(map);
 
-        // Fit the map bounds to markers and polygons with padding
         var allLayers = L.featureGroup([...markersGroup.getLayers(), ...polygonsGroup.getLayers()]);
         if (allLayers.getLayers().length > 0) {
             var bounds = allLayers.getBounds();
             if (bounds.isValid()) {
                 map.fitBounds(bounds, { padding: [50, 50] });
-            } else {
-                console.error("Invalid bounds calculated for markers and polygons.");
             }
-        } else {
-            console.log("No markers or polygons added.");
         }
-    } else {
-        console.error('Map is not initialized correctly');
     }
 }
+
+
 
 
 
@@ -1671,15 +1691,18 @@ timerInterval = setInterval(function() {
     prepareCsvData().then(() => {
         console.log("Map and CSV data are ready for search.");
 
-        // Get the value from the text-input and search for biblical references
+        // Get the value from the text-input
         const query = document.getElementById('text-input').value;
+
         if (query) {
+            // Search for biblical references
             let searchResults = searchBiblicalReferences(query);
             displayPlacesOnMap(searchResults);
         } else {
             console.log("No query provided in text-input.");
         }
     });
+
 }
 
 
@@ -2126,3 +2149,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 // This event listener should be at the global scope, outside of any other functions or blocks
 document.getElementById('startGameButton').addEventListener('click', startGame);
+
+
+
+
