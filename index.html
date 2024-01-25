@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Hebrew Text Memory Game</title>
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
         <style>
             body {
                 font-family: "FrankRuehl", "Noto Sans Hebrew", "David", "Tahoma", sans-serif;
@@ -149,6 +151,9 @@
 }
 
         </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+        
     </head>
     
     
@@ -305,6 +310,8 @@
         </div>
         <div id="full-verse-container"></div> <!-- Container for displaying the full verse -->   
     </div>
+
+    <div id="map" style="height: 400px;"></div>
 
     <div id="game-container"></div>
     <div id="score"></div>
