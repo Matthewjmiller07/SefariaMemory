@@ -9,148 +9,144 @@
         <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
         <style>
             body {
-                font-family: "FrankRuehl", "Noto Sans Hebrew", "David", "Tahoma", sans-serif;
-                padding: 20px;
-                counter-reset: blanks;  /* Reset the counter */
-                background: #f7f7f7; /* subtle background gradient */
-                color: #333; /* universal text color for better readability */
-            }
-    
-            input.blank::placeholder {
-                color: #bbb;
-            }
-            
-            #sticky-header {
-                position: sticky;
-                top: 0;
-                background-color: #eaeaea; /* Subtle grey background */
-                color: #333; /* Text color for better contrast */
+    font-family: "FrankRuehl", "Noto Sans Hebrew", "David", "Tahoma", sans-serif;
+    padding: 20px;
+    background: linear-gradient(to bottom right, #f7f7f7, #e6e6e6); /* gradient background */
+    color: #333;
+    counter-reset: blanks; /* Counter for blanks */
+}
+
+input.blank::placeholder {
+    color: #bbb;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-label {
+    margin-bottom: 5px;
+    display: block; /* label appears above the input */
+    color: #4a69bd; /* vibrant label color */
+    font-weight: bold;
+}
+
+input[type="text"], select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"]:focus {
+    border-color: #6c5ce7;
+    box-shadow: 0 0 8px rgba(108, 92, 231, 0.6);
+    outline: none;
+}
+
+/* Style for the blank input fields in the game */
+.blank-container input[type="text"] {
+    width: auto; /* adjust width as needed, or use 'auto' for content-based width */
+    display: inline-block; /* makes input inline */
+    border: none; /* remove default border */
+    border-bottom: 1px solid #6c5ce7; /* subtle underline style */
+    padding: 2px 5px; /* smaller padding */
+    margin: 0 2px; /* reduce margin to bring inputs closer together */
+    vertical-align: middle; /* align input boxes vertically */
+    font-size: 14px; /* smaller font size for inputs */
+    text-align: center; /* center the text inside input */
+    background-color: #f0f0f0; /* light background color for input */
+    color: #333; /* text color for input */
+}
+
+/* Adjust input focus style for game blanks */
+.blank-container input[type="text"]:focus {
+    border-bottom-color: #e17055; /* color when focused */
+    outline: none; /* remove focus outline */
+}
+
+        
+            #map-container {
                 padding: 10px;
-                z-index: 100;
-                max-height: 400px;  /* Fixed maximum height */
-                overflow-y: auto;  /* Scroll vertical */
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* subtle shadow for depth */
-                border-radius: 8px; /* rounded corners */
+                background-color: #ffffff;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                margin-top: 20px;
             }
-    
-            #memorized-list {
-                margin-left: 20px;
-                padding-left: 0;
+        
+            #map {
+                height: 400px;
+                margin-top: 10px;
             }
-    
+        
+            .checkbox-group label {
+                display: block;
+                margin: 5px 0;
+            }
+        
+            .checkbox-group input[type="checkbox"] {
+                margin-right: 5px;
+            }
+        
+            #instructions {
+                background-color: #f8f9fa;
+                border-left: 4px solid #6c5ce7;
+                padding: 15px;
+                border-radius: 4px;
+                margin-top: 20px;
+            }
+        
+            #game-container, #comparison-container, #full-verse-container {
+                background-color: #fff;
+                padding: 15px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                margin-top: 20px;
+            }
+        
+            button {
+                background-color: #4a69bd;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                margin-right: 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+        
+            button:hover {
+                background-color: #6c5ce7;
+            }
+        
+            button:disabled {
+                background-color: #ccc;
+            }
+        
             .flex-container {
                 display: flex;
                 justify-content: space-between;
+                flex-wrap: wrap;
             }
-    
-            .input-group {
-                flex: 1;
-                margin: 0 10px;
-            }
-    
-            #scrollable-section {
-                height: 400px;  /* Set height as needed */
-                overflow-y: auto;
-                background: #fff; /* for content contrast */
-                padding: 10px; /* spacing inside the scrollable */
-                border-radius: 8px; /* rounded corners */
-            }
-    
-            #game-container {
-                direction: rtl;  /* Set text direction to right-to-left */
-                background: #fff; /* contrast for the game area */
-                padding: 10px; /* spacing */
-                border-radius: 8px; /* rounded corners */
-                margin-top: 20px; /* spacing from previous elements */
-            }
-    
-            #description,
-            #instructions,
-            #game-container,
-            #comparison-container,
-            #full-verse-container {
-                margin-top: 20px;
-            }
-    
-            input[type="text"] {
-                width: 50%;
-                border: none; /* remove default border */
-                border-bottom: 2px solid #6c5ce7; /* underline style */
-                padding: 5px; /* input padding */
-                margin-bottom: 10px; /* space after each input */
-                transition: border-color 0.3s; /* smooth transition for focus */
-            }
-    
-            input[type="text"]:focus {
-                border-bottom-color: #e17055; /* color when focused */
-                outline: none; /* remove focus outline */
-            }
-    
-            .blank-container {
-                display: inline-block;
-                position: relative;
-                width: 50px;  /* Adjust width as needed */
-            }
-    
-            .blank-container::before {
-                content: counter(blanks) ' ';
-                counter-increment: blanks;
-                font-size: 10px;
-                vertical-align: super;
-                position: absolute;
-                top: 0;
-                left: 0;
-            }
-            
-            .input-group {
-                margin-bottom: 10px;
-            }
-    
-            .input-label {
-                margin-right: 10px;
-                display: block; /* label appears above the input */
-                color: #6c5ce7; /* label color */
-            }
-    
-            .or-divider {
-                display: flex;
-                align-items: center;
-                margin: 20px 0; /* more space around the divider */
-            }
-    
-            .or-text {
-                margin: 0 10px;
-                font-weight: bold;
-                background: #6c5ce7;
-                color: white;
-                padding: 2px 8px;
-                border-radius: 20px; /* rounded edges for the 'or' label */
-            }
-    
-            hr {
-                flex: 1;
-                border: none;
-                height: 1px;
-                background-color: #ccc; /* line color */
-            }
-
+        
             @media print {
-  /* Hide everything by default when printing */
-  body * {
-    visibility: hidden;
-  }
-  /* Then display the print area and modify it as needed */
-  #print-area, #print-area * {
-    visibility: visible;
-  }
-  #print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-  }
-}
-
+                body * {
+                    visibility: hidden;
+                }
+                #print-area, #print-area * {
+                    visibility: visible;
+                }
+                #print-area {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                }
+            }
         </style>
+        
+        
         <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
         
@@ -313,6 +309,11 @@
               </div>
         </div>
         <div id="full-verse-container"></div> <!-- Container for displaying the full verse -->   
+            
+        </div>
+    </div>
+
+    <div id="map-container">
         <div class="input-group">
             <label class="input-label">Select Confidence Levels:</label>
             <div>
@@ -326,13 +327,11 @@
                 <label><input type="checkbox" name="confidence" value="30"> 30</label>
                 <label><input type="checkbox" name="confidence" value="20"> 20</label>
                 <label><input type="checkbox" name="confidence" value="10"> 10</label>
-            </div>       
+            </div>
         </div>
-        
-        
-
         <div id="map" style="height: 400px;"></div>
     </div>
+    
 
     <div id="game-container"></div>
     <div id="score"></div>
