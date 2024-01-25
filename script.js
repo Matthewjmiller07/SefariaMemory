@@ -1,3 +1,148 @@
+let biblicalPlaces = [];
+
+// Declare map globally
+var map;
+
+async function loadCsvData() {
+    console.log("Loading CSV data...");
+    try {
+        const response = await fetch('biblical_places_output.csv'); // Make sure the CSV file path is correct
+        const csvText = await response.text();
+        Papa.parse(csvText, {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                biblicalPlaces = results.data;
+                console.log("CSV Data loaded:", biblicalPlaces.length, "records");
+            }
+        });
+    } catch (error) {
+        console.error("Error loading CSV data:", error);
+    }
+}
+
+function searchBiblicalReferences(query) {
+    console.log("Query:", query);
+
+    let searchResults = biblicalPlaces.filter(place => {
+        let references = place['Biblical References'];
+        console.log("Checking place:", place['Place Name'], "with references:", references); // Log each place and its references
+        if (references) {
+            let refsArray = references.split(',').map(ref => ref.trim());
+            return refsArray.includes(query);
+        }
+        return false;
+    });
+
+    console.log("Search results:", searchResults);
+    return searchResults;
+}
+
+
+function displayPlacesOnMap(places) {
+    console.log("Displaying places on map:", places);
+
+    if (typeof map.eachLayer === 'function') {
+        // Clear existing markers and polygons
+        map.eachLayer(function(layer) {
+            if (layer instanceof L.Marker || layer instanceof L.Polygon) {
+                map.removeLayer(layer);
+            }
+        });
+
+        var markersGroup = L.featureGroup();
+        var polygonsGroup = L.featureGroup();
+
+        places.forEach(place => {
+            if (place.Coordinates) {
+                const coordPairs = place.Coordinates.split(' ');
+                const latLngPairs = coordPairs.map(coordPair => {
+                    const [lat, lng] = coordPair.split(',').map(Number);
+                    return [lng, lat]; // Swap latitude and longitude if necessary
+                });
+
+                if (latLngPairs.length > 2) {
+                    // If more than two coordinate pairs, plot as a polygon
+                    console.log("Adding polygon for:", place['Place Name'], "with coordinates:", latLngPairs);
+                    var polygon = L.polygon(latLngPairs, {color: 'blue'}).bindPopup(place['Place Name']);
+                    polygonsGroup.addLayer(polygon);
+                } else {
+                    // Otherwise, plot as markers
+                    latLngPairs.forEach(([lat, lng]) => {
+                        console.log("Adding marker for:", place['Place Name'], "at coordinates:", [lat, lng]);
+                        var marker = L.marker([lat, lng]).bindPopup(place['Place Name']);
+                        markersGroup.addLayer(marker);
+                    });
+                }
+            } else {
+                console.error("No coordinates found for:", place);
+            }
+        });
+
+        // Add the markers and polygons to the map
+        markersGroup.addTo(map);
+        polygonsGroup.addTo(map);
+
+        // Fit the map bounds to markers and polygons with padding
+        var allLayers = L.featureGroup([...markersGroup.getLayers(), ...polygonsGroup.getLayers()]);
+        if (allLayers.getLayers().length > 0) {
+            var bounds = allLayers.getBounds();
+            if (bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+            } else {
+                console.error("Invalid bounds calculated for markers and polygons.");
+            }
+        } else {
+            console.log("No markers or polygons added.");
+        }
+    } else {
+        console.error('Map is not initialized correctly');
+    }
+}
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const textInput = document.getElementById('text-input');
+    textInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            console.log("Enter key pressed. Initiating search...");
+            let searchResults = searchBiblicalReferences(event.target.value);
+            displayPlacesOnMap(searchResults);
+        }
+    });
+});
+
+
+function initializeMap() {
+    console.log("Initializing map...");
+    map = L.map('map').setView([34.056, -118.235], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    console.log("Map initialized.");
+}
+
+async function prepareCsvData() {
+    console.log("Preparing CSV data...");
+    await loadCsvData(); // Call the existing loadCsvData function
+}
+
+
+
+
+
+
+
+
+
+
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import {
@@ -1436,6 +1581,22 @@ timerInterval = setInterval(function() {
         isGameStarting = false;
         stopTimer();
     });
+
+
+    // Initialize the map and load CSV data when the game starts
+    initializeMap();
+    prepareCsvData().then(() => {
+        console.log("Map and CSV data are ready for search.");
+
+        // Get the value from the text-input and search for biblical references
+        const query = document.getElementById('text-input').value;
+        if (query) {
+            let searchResults = searchBiblicalReferences(query);
+            displayPlacesOnMap(searchResults);
+        } else {
+            console.log("No query provided in text-input.");
+        }
+    });
 }
 
 
@@ -1783,6 +1944,18 @@ function toggleDisplayMode() {
         comparisonContainer.innerHTML = ''; // Clear the comparison content from the bottom
     }
 }
+function isReferenceMatch(biblicalReferences, query) {
+    // Ensure the biblicalReferences is a non-null string
+    if (typeof biblicalReferences === 'string') {
+        // Split the references by comma and normalize them
+        return biblicalReferences.split(',').some(ref => {
+            // Normalize and compare each reference to the query
+            let normalizedRef = normalizeReference(ref);
+            return normalizedRef.includes(query);
+        });
+    }
+    return false;
+}
 
 
 function printQuiz() {
@@ -1870,3 +2043,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 // This event listener should be at the global scope, outside of any other functions or blocks
 document.getElementById('startGameButton').addEventListener('click', startGame);
+
+
+
+
