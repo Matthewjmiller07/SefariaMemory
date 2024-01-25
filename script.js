@@ -93,6 +93,8 @@ function searchBiblicalReferences(query) {
     return searchResults;
 }
 
+
+
 function displayPlacesOnMap(places) {
     console.log("Displaying places on map:", places);
 
@@ -2119,7 +2121,3 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 // This event listener should be at the global scope, outside of any other functions or blocks
 document.getElementById('startGameButton').addEventListener('click', startGame);
-
-
-
-
