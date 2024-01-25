@@ -24,10 +24,13 @@ async function loadCsvData() {
 
 // Function to parse the text reference or range
 function parseReferenceRange(input) {
+    // Normalize the input to replace en dashes with hyphens
+    const normalizedInput = input.replace(/–/g, '-');
+
     const bookChapterVersePattern = /([\w\s]+)\s+(\d+):(\d+)(?:-(\d+):(\d+))?/;
     const bookChapterPattern = /([\w\s]+)\s+(\d+)(?::(\d+))?/;
 
-    let match = input.match(bookChapterVersePattern);
+    let match = normalizedInput.match(bookChapterVersePattern);
     if (match) {
         return {
             book: match[1].trim(),
@@ -38,19 +41,21 @@ function parseReferenceRange(input) {
         };
     }
 
-    match = input.match(bookChapterPattern);
+    // If the first pattern doesn't match, try the second pattern
+    match = normalizedInput.match(bookChapterPattern);
     if (match) {
         return {
             book: match[1].trim(),
             chapterStart: parseInt(match[2], 10),
             verseStart: match[3] ? parseInt(match[3], 10) : 1,
             chapterEnd: parseInt(match[2], 10),
-            verseEnd: 999 // A large number to cover the entire chapter
+            verseEnd: match[3] ? parseInt(match[3], 10) : 1
         };
     }
 
-    return null;
+    return null; // Return null if no pattern matches
 }
+
 
 // Function to check if a reference is within the query range
 function isReferenceInRange(ref, query) {
