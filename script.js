@@ -120,14 +120,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 function initializeMap() {
-    console.log("Initializing map...");
-    map = L.map('map').setView([34.056, -118.235], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    console.log("Map initialized.");
+    // Check if the map has already been initialized
+    if (map) {
+        console.log("Resetting the map...");
+
+        // Reset the map view to default coordinates and zoom level
+        map.setView([34.056, -118.235], 13);
+
+        // Remove all layers (markers, polygons, etc.) from the map
+        map.eachLayer(function (layer) {
+            map.removeLayer(layer);
+        });
+
+        // Re-add the tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+    } else {
+        console.log("Initializing new map...");
+
+        // Initialize the map for the first time
+        map = L.map('map').setView([34.056, -118.235], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+    }
+
+    console.log("Map ready.");
 }
+
 
 async function prepareCsvData() {
     console.log("Preparing CSV data...");
