@@ -144,7 +144,8 @@ function displayPlacesOnMap(places) {
                     return [lng, lat];
                 });
 
-                const popupContent = `<strong>${place['Place Name']}</strong><br>Confidence Score: ${place['Confidence Score']}`;
+                // Prepare popup content with place name, confidence score, and biblical references
+                const popupContent = `<b>${place['Place Name']}</b><br>Confidence: ${place['Confidence Score']}<br>References: ${place['Biblical References']}`;
 
                 if (latLngPairs.length > 2) {
                     var polygon = L.polygon(latLngPairs, {
@@ -178,6 +179,8 @@ function displayPlacesOnMap(places) {
         }
     }
 }
+
+
 
 
 
