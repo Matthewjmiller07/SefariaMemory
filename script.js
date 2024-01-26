@@ -27,13 +27,10 @@ async function loadCsvData() {
 }
 
 
-// Function to parse the text reference or range
 function parseReferenceRange(input) {
-    // Normalize the input to replace en dashes with hyphens
     const normalizedInput = input.replace(/–/g, '-');
-
     const bookChapterVersePattern = /([\w\s]+)\s+(\d+):(\d+)(?:-(\d+):(\d+))?/;
-    const bookChapterPattern = /([\w\s]+)\s+(\d+)(?::(\d+))?/;
+    const bookChapterPattern = /([\w\s]+)\s+(\d+)(?:-(\d+))?/;
 
     let match = normalizedInput.match(bookChapterVersePattern);
     if (match) {
@@ -46,20 +43,21 @@ function parseReferenceRange(input) {
         };
     }
 
-    // If the first pattern doesn't match, try the second pattern
     match = normalizedInput.match(bookChapterPattern);
     if (match) {
         return {
             book: match[1].trim(),
             chapterStart: parseInt(match[2], 10),
-            verseStart: match[3] ? parseInt(match[3], 10) : 1,
-            chapterEnd: parseInt(match[2], 10),
-            verseEnd: match[3] ? parseInt(match[3], 10) : 1
+            chapterEnd: match[3] ? parseInt(match[3], 10) : parseInt(match[2], 10),
+            verseStart: 1, // Start with the first verse of the start chapter
+            verseEnd: 999 // A high number to cover all verses in the end chapter
         };
     }
 
-    return null; // Return null if no pattern matches
+    return null;
 }
+
+
 
 
 // Function to check if a reference is within the query range
@@ -80,7 +78,6 @@ function isReferenceInRange(ref, query) {
 }
 
 // Updated search function
-// Updated search function to include confidence level filtering
 function searchBiblicalReferences(query) {
     console.log("Query:", query);
 
@@ -90,18 +87,18 @@ function searchBiblicalReferences(query) {
         return [];
     }
 
-    // Retrieve the selected confidence levels
     const selectedConfidenceLevels = getSelectedConfidenceLevels();
 
     let searchResults = biblicalPlaces.filter(place => {
         let references = place['Biblical References'];
         let confidenceScore = place['Confidence Score'];
 
-        // Check if the place's confidence level is among the selected ones
         if (selectedConfidenceLevels.includes(confidenceScore)) {
             if (references) {
-                // Only proceed if references are not null or undefined
-                return references.split(',').map(ref => parseReferenceRange(ref.trim())).some(ref => isReferenceInRange(ref, parsedQuery));
+                return references.split(',').some(reference => {
+                    const parsedRef = parseReferenceRange(reference.trim());
+                    return parsedRef && isReferenceInRange(parsedRef, parsedQuery);
+                });
             }
         }
         return false;
@@ -110,6 +107,7 @@ function searchBiblicalReferences(query) {
     console.log("Search results:", searchResults);
     return searchResults;
 }
+
 
 
 
@@ -127,6 +125,7 @@ function displayPlacesOnMap(places) {
     console.log("Displaying places on map:", places);
 
     if (typeof map.eachLayer === 'function') {
+        // Clear existing markers and polygons
         map.eachLayer(function(layer) {
             if (layer instanceof L.Marker || layer instanceof L.Polygon) {
                 map.removeLayer(layer);
@@ -141,13 +140,17 @@ function displayPlacesOnMap(places) {
                 const coordPairs = place.Coordinates.split(' ');
                 const latLngPairs = coordPairs.map(coordPair => {
                     const [lat, lng] = coordPair.split(',').map(Number);
-                    return [lng, lat];
-                });
+                    // Filter out invalid coordinates
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        return [lng, lat]; // Swapping to match Leaflet's [lat, lng] format
+                    }
+                    return null; // Exclude invalid pairs
+                }).filter(pair => pair); // Remove null entries
 
-                // Prepare popup content with place name, confidence score, and biblical references
                 const popupContent = `<b>${place['Place Name']}</b><br>Confidence: ${place['Confidence Score']}<br>References: ${place['Biblical References']}`;
 
                 if (latLngPairs.length > 2) {
+                    // Create polygon for places with multiple coordinates
                     var polygon = L.polygon(latLngPairs, {
                         color: 'blue',
                         fillOpacity: 0.5
@@ -156,9 +159,9 @@ function displayPlacesOnMap(places) {
                       .on('click', function() {
                           this.bringToFront();
                       });
-
                     polygonsGroup.addLayer(polygon);
-                } else {
+                } else if (latLngPairs.length > 0) {
+                    // Create marker for places with single coordinates
                     latLngPairs.forEach(([lat, lng]) => {
                         var marker = L.marker([lat, lng]).bindPopup(popupContent);
                         markersGroup.addLayer(marker);
@@ -167,9 +170,11 @@ function displayPlacesOnMap(places) {
             }
         });
 
+        // Add marker and polygon groups to the map
         markersGroup.addTo(map);
         polygonsGroup.addTo(map);
 
+        // Fit the map bounds to the markers and polygons
         var allLayers = L.featureGroup([...markersGroup.getLayers(), ...polygonsGroup.getLayers()]);
         if (allLayers.getLayers().length > 0) {
             var bounds = allLayers.getBounds();
@@ -179,6 +184,7 @@ function displayPlacesOnMap(places) {
         }
     }
 }
+
 
 
 
